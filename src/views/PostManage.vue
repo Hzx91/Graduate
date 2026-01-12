@@ -437,56 +437,328 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* 全局样式重置和基础设置 */
 .post-manage {
-  padding: 10px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: calc(100vh - 70px);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
+/* 卡片样式 */
+.post-manage :deep(.el-card) {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: none;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+/* 页面标题 */
+.post-manage h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #4a5568;
+  margin: 0 0 20px 0;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e2e8f0;
+  background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 搜索框样式 */
+.post-manage :deep(.el-input__wrapper) {
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.post-manage :deep(.el-input__wrapper:hover) {
+  border-color: #6b46c1;
+  box-shadow: 0 4px 12px rgba(107, 70, 193, 0.2);
+}
+
+.post-manage :deep(.el-input__wrapper.is-focus) {
+  border-color: #6b46c1;
+  box-shadow: 0 4px 16px rgba(107, 70, 193, 0.3);
+}
+
+/* 搜索按钮样式 */
+.post-manage :deep(.el-input__append-inner .el-button) {
+  border-radius: 10px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
+  border: none;
+  color: #fff;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.post-manage :deep(.el-input__append-inner .el-button:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #553c9a 0%, #6b46c1 100%);
+}
+
+/* 表格样式 */
+.post-manage :deep(.el-table) {
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 20px;
+}
+
+.post-manage :deep(.el-table__header-wrapper) {
+  background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
+}
+
+.post-manage :deep(.el-table__header-wrapper th) {
+  background: transparent;
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  text-align: center;
+  padding: 16px;
+}
+
+.post-manage :deep(.el-table__body-wrapper tr) {
+  transition: all 0.3s ease;
+}
+
+.post-manage :deep(.el-table__body-wrapper tr:hover) {
+  background: rgba(107, 70, 193, 0.05);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.post-manage :deep(.el-table__body-wrapper td) {
+  padding: 16px;
+  text-align: center;
+  color: #4a5568;
+  font-size: 14px;
+  border-bottom: 1px solid #f7fafc;
+}
+
+.post-manage :deep(.el-table__body-wrapper tr.el-table__row--striped) {
+  background: rgba(247, 250, 252, 0.8);
+}
+
+/* 表格边框样式 */
+.post-manage :deep(.el-table--border .el-table__inner-wrapper::after),
+.post-manage :deep(.el-table--border .el-table__inner-wrapper::before),
+.post-manage :deep(.el-table__inner-wrapper::after),
+.post-manage :deep(.el-table__inner-wrapper::before) {
+  background-color: transparent;
+}
+
+/* 操作按钮样式 */
+.post-manage :deep(.el-table .el-button) {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 6px 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 2px;
+}
+
+.post-manage :deep(.el-table .el-button:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.post-manage :deep(.el-button--primary) {
+  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+  border: none;
+}
+
+.post-manage :deep(.el-button--primary:hover) {
+  background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
+}
+
+.post-manage :deep(.el-button--warning) {
+  background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+  border: none;
+}
+
+.post-manage :deep(.el-button--warning:hover) {
+  background: linear-gradient(135deg, #dd6b20 0%, #c05621 100%);
+}
+
+.post-manage :deep(.el-button--success) {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  border: none;
+}
+
+.post-manage :deep(.el-button--success:hover) {
+  background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+}
+
+.post-manage :deep(.el-button--danger) {
+  background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+  border: none;
+}
+
+.post-manage :deep(.el-button--danger:hover) {
+  background: linear-gradient(135deg, #c53030 0%, #9b2c2c 100%);
+}
+
+/* 标签样式 */
+.post-manage :deep(.el-tag) {
+  font-weight: 500;
+  border-radius: 12px;
+  padding: 4px 12px;
+  font-size: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 分页样式 */
+.post-manage :deep(.el-pagination) {
+  margin-top: 20px;
+  text-align: right;
+}
+
+.post-manage :deep(.el-pagination button) {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.post-manage :deep(.el-pagination button:hover) {
+  background: rgba(107, 70, 193, 0.1);
+  color: #6b46c1;
+  transform: translateY(-1px);
+}
+
+.post-manage :deep(.el-pagination .el-pager li) {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  margin: 0 3px;
+}
+
+.post-manage :deep(.el-pagination .el-pager li:hover) {
+  background: rgba(107, 70, 193, 0.1);
+  color: #6b46c1;
+}
+
+.post-manage :deep(.el-pagination .el-pager li.active) {
+  background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(107, 70, 193, 0.3);
+}
+
+/* 详情弹窗样式 */
+.post-manage :deep(.el-dialog) {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+}
+
+.post-manage :deep(.el-dialog__header) {
+  background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
+  color: #fff;
+  padding: 20px;
+}
+
+.post-manage :deep(.el-dialog__title) {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.post-manage :deep(.el-dialog__headerbtn) {
+  color: #fff;
+}
+
+.post-manage :deep(.el-dialog__headerbtn:hover) {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.post-manage :deep(.el-dialog__body) {
+  padding: 30px;
+  background: #fff;
+}
+
+.post-manage :deep(.el-dialog__footer) {
+  background: #f7fafc;
+  padding: 20px 30px;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* 详情内容样式 */
 .post-detail {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 20px;
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 10px;
 }
 
 .detail-item {
   display: flex;
   align-items: flex-start;
+  gap: 20px;
+  padding: 15px;
+  background: #f7fafc;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.detail-item:hover {
+  background: #edf2f7;
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .label {
-  font-weight: bold;
-  margin-right: 10px;
-  min-width: 80px;
+  font-weight: 600;
+  color: #4a5568;
+  min-width: 100px;
+  flex-shrink: 0;
+  font-size: 14px;
+  padding-top: 4px;
 }
 
 .value {
   flex: 1;
+  color: #718096;
+  font-size: 14px;
 }
 
 .content {
   white-space: pre-wrap;
   word-break: break-word;
+  line-height: 1.6;
+  background: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
+/* 图片样式 */
 .images {
   display: flex;
   flex-wrap: wrap;
+  gap: 10px;
 }
 
-/* 评论表格容器，添加滚动条 */
-.comment-table-container {
-  max-height: 300px;
-  overflow-y: auto;
-  border: 1px solid #eaeaea;
-  border-radius: 4px;
+.image-wrapper {
+  display: inline-block;
+  margin: 0;
 }
 
-/* 图片显示优化 */
-.images img {
-  max-width: 120px;
-  max-height: 120px;
-  object-fit: cover;
-  border-radius: 4px;
-  margin: 5px;
+.image-wrapper :deep(.el-image) {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  cursor: zoom-in;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.image-wrapper :deep(.el-image:hover) {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
 /* 图片占位符样式 */
@@ -496,29 +768,110 @@ onMounted(() => {
   align-items: center;
   width: 120px;
   height: 120px;
-  background-color: #f5f5f5;
-  border: 1px dashed #eaeaea;
-  border-radius: 4px;
-  color: #999;
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  border: 2px dashed #cbd5e0;
+  border-radius: 8px;
+  color: #a0aec0;
   font-size: 12px;
   text-align: center;
+  transition: all 0.3s ease;
 }
 
-/* 图片包装器样式 */
-.image-wrapper {
-  display: inline-block;
-  margin: 5px;
-}
-
-/* 修复详情页内容超出问题 */
-.post-detail {
-  max-height: 600px;
+/* 评论表格样式 */
+.comment-table-container {
+  max-height: 400px;
   overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
 }
 
-/* 评论列表容器 */
-.comments-list {
-  width: 100%;
-  overflow-x: auto;
+.comment-table-container :deep(.el-table) {
+  margin-top: 0;
+  border-radius: 0;
+}
+
+.comment-table-container :deep(.el-table__header-wrapper) {
+  background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+}
+
+/* 关闭按钮样式 */
+.post-manage :deep(.el-dialog__footer .el-button) {
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  padding: 8px 20px;
+}
+
+.post-manage :deep(.el-dialog__footer .el-button:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 滚动条样式 */
+.post-detail::-webkit-scrollbar,
+.comment-table-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.post-detail::-webkit-scrollbar-track,
+.comment-table-container::-webkit-scrollbar-track {
+  background: #f7fafc;
+  border-radius: 4px;
+}
+
+.post-detail::-webkit-scrollbar-thumb,
+.comment-table-container::-webkit-scrollbar-thumb {
+  background: rgba(107, 70, 193, 0.5);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.post-detail::-webkit-scrollbar-thumb:hover,
+.comment-table-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 70, 193, 0.7);
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .post-manage {
+    padding: 15px;
+  }
+  
+  .detail-item {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .label {
+    min-width: auto;
+    padding-top: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .post-manage {
+    padding: 10px;
+  }
+  
+  .post-manage h3 {
+    font-size: 20px;
+  }
+  
+  .post-manage :deep(.el-table) {
+    font-size: 13px;
+  }
+  
+  .post-manage :deep(.el-table__body-wrapper td) {
+    padding: 12px 8px;
+  }
+  
+  .post-manage :deep(.el-table .el-button) {
+    padding: 4px 8px;
+    font-size: 12px;
+    margin: 1px;
+  }
 }
 </style>

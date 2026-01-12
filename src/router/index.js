@@ -31,6 +31,24 @@ const router = createRouter({
                     path: 'resource-manage', // 完整路径：/home/resource-manage
                     name: 'ResourceManage',
                     component: ResourceManage
+                },
+                {
+                    path: 'resource-relief', // 完整路径：/home/resource-relief
+                    name: 'ResourceRelief',
+                    component: ResourceManage,
+                    meta: { category: '减压' }
+                },
+                {
+                    path: 'resource-music', // 完整路径：/home/resource-music
+                    name: 'ResourceMusic',
+                    component: ResourceManage,
+                    meta: { category: '音乐' }
+                },
+                {
+                    path: 'resource-other', // 完整路径：/home/resource-other
+                    name: 'ResourceOther',
+                    component: ResourceManage,
+                    meta: { category: '其他' }
                 }
             ]
         }

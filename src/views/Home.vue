@@ -1,79 +1,123 @@
 <template>
   <div class="home-container">
-    <!-- 侧边栏 -->
-    <el-container style="height: 100vh;">
-      <el-aside width="200px" style="background-color: #2e3b4e;">
-        <el-menu
-          default-active="1"
-          class="el-menu-vertical-demo"
-          background-color="#2e3b4e"
-          text-color="#fff"
-          active-text-color="#ffd04b"
-          @select="handleMenuSelect"
-        >
-          <el-menu-item index="1">
-            <!-- 修复：图标使用方式改为正确写法 -->
-            <el-icon><User /></el-icon>
-            <template #title>首页</template>
-          </el-menu-item>
-          <el-menu-item index="2">
-            <el-icon><Document /></el-icon>
-            <template #title>帖子管理</template>
-          </el-menu-item>
-          <el-menu-item index="3">
-            <el-icon><Picture /></el-icon>
-            <template #title>资源管理</template>
-          </el-menu-item>
-          <el-menu-item index="4" @click="logout">
-            <el-icon><SwitchButton/></el-icon>
-            <template #title>退出登录</template>
-          </el-menu-item>
-        </el-menu>
-      </el-aside>
+    <!-- 顶部导航栏布局 -->
+    <el-container>
+      <!-- 顶部导航栏 -->
+      <el-header class="top-header">
+        <div class="header-content">
+          <!-- 左侧logo -->
+          <div class="logo">
+            <el-icon class="logo-icon"><User /></el-icon>
+            <span class="logo-text">快乐心球管理后台</span>
+          </div>
+          
+          <!-- 中间导航菜单 -->
+          <el-menu
+            :default-active="activeIndex"
+            mode="horizontal"
+            class="nav-menu"
+            @select="handleMenuSelect"
+          >
+            <el-menu-item index="1">
+              <el-icon><House /></el-icon>
+              <template #title>首页</template>
+            </el-menu-item>
+            <el-menu-item index="2">
+              <el-icon><Document /></el-icon>
+              <template #title>帖子管理</template>
+            </el-menu-item>
+            <el-menu-item index="3">
+              <el-icon><Picture /></el-icon>
+              <template #title>资源管理</template>
+            </el-menu-item>
+            <!-- 资源分类子菜单 -->
+            <el-sub-menu index="4">
+              <template #title>
+                <el-icon><Grid /></el-icon>
+                <span>资源分类</span>
+              </template>
+              <el-menu-item index="4-1">减压</el-menu-item>
+              <el-menu-item index="4-2">音乐</el-menu-item>
+              <el-menu-item index="4-3">其他</el-menu-item>
+            </el-sub-menu>
+          </el-menu>
+          
+          <!-- 右侧用户信息 -->
+          <div class="user-info">
+            <el-dropdown>
+              <span class="user-dropdown">
+                <el-avatar :size="36" src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"></el-avatar>
+                <span class="admin-text">管理员</span>
+                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item>个人中心</el-dropdown-item>
+                  <el-dropdown-item>设置</el-dropdown-item>
+                  <el-dropdown-item divided @click="logout">退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+        </div>
+      </el-header>
 
       <!-- 主内容区：渲染子路由页面 -->
-      <el-container>
-        <el-header style="text-align: right; font-size: 12px">
-          <el-dropdown>
-            <i class="el-icon-setting" style="margin-right: 15px"></i>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item>查看</el-dropdown-item>
-                <el-dropdown-item>新增</el-dropdown-item>
-                <el-dropdown-item>删除</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-          <span>管理员</span>
-        </el-header>
-        <el-main>
-          <!-- 子路由出口：帖子/资源管理页在这里渲染 -->
-          <router-view></router-view>
-        </el-main>
-      </el-container>
+      <el-main class="main-content">
+        <!-- 子路由出口：帖子/资源管理页在这里渲染 -->
+        <router-view></router-view>
+      </el-main>
     </el-container>
   </div>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-// 修复：正确导入Element Plus图标（确保已装@element-plus/icons-vue）
-import { User, Document, Picture, SwitchButton } from '@element-plus/icons-vue'
+// 导入Element Plus图标
+import { User, Document, Picture, SwitchButton, House, Grid, ArrowDown } from '@element-plus/icons-vue'
 
 const router = useRouter()
+const route = useRoute()
 
-// 侧边栏菜单切换
+// 活跃菜单索引
+const activeIndex = ref('1')
+
+// 页面加载时设置活跃菜单
+onMounted(() => {
+  // 根据当前路由设置活跃菜单
+  if (route.path === '/home') {
+    activeIndex.value = '1'
+  } else if (route.path === '/home/post-manage') {
+    activeIndex.value = '2'
+  } else if (route.path === '/home/resource-manage') {
+    activeIndex.value = '3'
+  } else if (route.path.includes('/home/resource-')) {
+    activeIndex.value = '4'
+  }
+})
+
+// 顶部导航菜单切换
 const handleMenuSelect = (index) => {
   switch (index) {
     case '1':
-      router.push('/home') // 首页（可加一个空的首页组件）
+      router.push('/home') // 首页
       break
     case '2':
       router.push('/home/post-manage') // 帖子管理页
       break
     case '3':
       router.push('/home/resource-manage') // 资源管理页
+      break
+    case '4-1':
+      router.push('/home/resource-relief') // 减压资源页
+      break
+    case '4-2':
+      router.push('/home/resource-music') // 音乐资源页
+      break
+    case '4-3':
+      router.push('/home/resource-other') // 其他资源页
       break
   }
 }
@@ -87,12 +131,155 @@ const logout = () => {
 </script>
 
 <style scoped>
-.el-header {
+/* 全局容器样式 */
+.home-container {
+  min-height: 100vh;
+  background-color: #f5f7fa;
+}
+
+/* 顶部导航栏样式 */
+.top-header {
+  background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
+  box-shadow: 0 2px 12px rgba(107, 70, 193, 0.15);
+  padding: 0;
+  height: 70px;
+  display: flex;
+  align-items: center;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 30px;
+}
+
+/* Logo样式 */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  font-size: 28px;
+  color: #fff;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: bold;
+  color: #fff;
+}
+
+/* 导航菜单样式 */
+.nav-menu {
+  background-color: transparent;
+  border-bottom: none;
+  flex: 1;
+  margin: 0 40px;
+}
+
+.nav-menu :deep(.el-menu-item) {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 15px;
+  height: 70px;
+  line-height: 70px;
+  padding: 0 25px;
+}
+
+.nav-menu :deep(.el-menu-item:hover) {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.nav-menu :deep(.el-menu-item.is-active) {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border-bottom: 3px solid #fff;
+}
+
+.nav-menu :deep(.el-sub-menu__title) {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 15px;
+  height: 70px;
+  line-height: 70px;
+  padding: 0 25px;
+}
+
+.nav-menu :deep(.el-sub-menu__title:hover) {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.nav-menu :deep(.el-sub-menu .el-menu-item) {
   background-color: #fff;
   color: #333;
-  line-height: 60px;
+  height: 50px;
+  line-height: 50px;
+  padding: 0 30px;
 }
-.el-aside {
-  color: #333;
+
+.nav-menu :deep(.el-sub-menu .el-menu-item:hover) {
+  background-color: #f5f7fa;
+  color: #6b46c1;
+}
+
+/* 用户信息样式 */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #fff;
+}
+
+.admin-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.user-dropdown:hover {
+  color: #fff;
+}
+
+.user-dropdown :deep(.el-icon-arrow-down) {
+  color: #fff;
+  font-size: 14px;
+}
+
+/* 主内容区样式 */
+.main-content {
+  background-color: #f5f7fa;
+  padding: 20px;
+  min-height: calc(100vh - 70px);
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .header-content {
+    padding: 0 20px;
+  }
+  
+  .nav-menu {
+    margin: 0 20px;
+  }
+  
+  .logo-text {
+    font-size: 18px;
+  }
+  
+  .nav-menu :deep(.el-menu-item),
+  .nav-menu :deep(.el-sub-menu__title) {
+    padding: 0 20px;
+    font-size: 14px;
+  }
 }
 </style>

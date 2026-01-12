@@ -3,6 +3,17 @@
     <el-card shadow="hover">
       <el-divider content="资源上传" />
       <!-- 资源上传表单 -->
+      <!-- 搜索功能 -->
+      <div class="search-container" style="margin-bottom: 20px; display: flex; align-items: center;">
+        <label style="margin-right: 10px;">关键字搜索：</label>
+        <input 
+          type="text" 
+          v-model="searchText" 
+          placeholder="输入资源名称或描述" 
+          style="width: 200px; padding: 8px; border: 1px solid #e6e6e6; border-radius: 4px; margin-right: 10px;"
+        >
+        <el-button type="primary" @click="searchResource">搜索</el-button>
+      </div>
       <div class="upload-form" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 15px;">
         <!-- 资源名称 -->
         <div class="form-group">
@@ -24,6 +35,18 @@
             style="width: 300px; padding: 8px; border: 1px solid #e6e6e6; border-radius: 4px;"
           >
         </div>
+        <!-- 资源分类 -->
+        <div class="form-group">
+          <label style="display: inline-block; width: 120px; text-align: right; margin-right: 10px;">资源分类</label>
+          <select 
+            v-model="resourceCategory" 
+            style="width: 318px; padding: 8px; border: 1px solid #e6e6e6; border-radius: 4px;"
+          >
+            <option value="减压">减压</option>
+            <option value="音乐">音乐</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
         <!-- 上传组件：支持视频+20MB限制 -->
         <div class="form-group">
           <label style="display: inline-block; width: 120px; text-align: right; margin-right: 10px;">选择文件</label>
@@ -33,7 +56,7 @@
             name="resourceFile"  
             accept=".jpg,.png,.mp3,.mp4"  
             :limit="1"
-            :data="{ name: resourceName, desc: resourceDesc }"  
+            :data="{ name: resourceName, desc: resourceDesc, category: resourceCategory }"  
             @success="handleUploadSuccess"
             @error="handleUploadError"
             :file-list="fileList"
@@ -48,6 +71,7 @@
           <!-- <el-table-column prop="id" label="资源ID" width="80"></el-table-column> -->
           <el-table-column prop="call_index" label="资源名称" width="200"></el-table-column>
           <el-table-column prop="zhaiyao" label="资源描述" width="300"></el-table-column>
+          <el-table-column prop="category" label="资源分类" width="100"></el-table-column>
           <!-- 修复：渲染图片，不再显示纯地址 -->
           <el-table-column label="资源预览" width="120">
             <template #default="scope">
@@ -85,7 +109,9 @@ import { ElCard, ElDivider, ElUpload, ElButton, ElTable, ElTableColumn, ElMessag
 const tableData = ref([])  
 const resourceName = ref('')  
 const resourceDesc = ref('')  
+const resourceCategory = ref('减压') // 默认分类为减压
 const fileList = ref([]) // 上传文件列表
+const searchText = ref('') // 搜索关键字
 
 // 页面加载时获取数据
 onMounted(() => {
@@ -148,6 +174,33 @@ const handleUploadError = (err) => {
   }
   ElMessage.error(errorMsg)
   console.log('上传错误详情：', err)
+}
+
+// 搜索资源
+const searchResource = () => {
+  if (!searchText.value.trim()) {
+    // 搜索关键字为空，获取所有资源
+    getResourceList()
+    return
+  }
+  
+  // 根据关键字过滤资源
+  const keyword = searchText.value.trim().toLowerCase()
+  const filteredData = tableData.value.filter(item => {
+    // 检查资源名称和描述是否包含关键字
+    const name = item.call_index?.toLowerCase() || ''
+    const desc = item.zhaiyao?.toLowerCase() || ''
+    return name.includes(keyword) || desc.includes(keyword)
+  })
+  
+  // 更新表格数据
+  if (filteredData.length === 0) {
+    ElMessage.info('未找到匹配的资源')
+  }
+  
+  // 这里应该直接调用后端搜索接口，我先模拟一下前端过滤
+  // 实际应该调用：axios.get('/api/searchResource', { params: { keyword } })
+  tableData.value = filteredData
 }
 
 // 删除资源：同步删除前端列表

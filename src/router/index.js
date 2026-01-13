@@ -4,6 +4,7 @@ import Login from '../views/Login.vue'
 import Home from '../views/Home.vue'
 import PostManage from '../views/PostManage.vue'
 import ResourceManage from '../views/ResourceManage.vue'
+import UserManage from '../views/UserManage.vue'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -49,6 +50,11 @@ const router = createRouter({
                     name: 'ResourceOther',
                     component: ResourceManage,
                     meta: { category: '其他' }
+                },
+                {
+                    path: 'user-manage', // 完整路径：/home/user-manage
+                    name: 'UserManage',
+                    component: UserManage
                 }
             ]
         }

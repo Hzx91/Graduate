@@ -40,6 +40,10 @@
               <el-menu-item index="4-2">音乐</el-menu-item>
               <el-menu-item index="4-3">其他</el-menu-item>
             </el-sub-menu>
+            <el-menu-item index="5">
+              <el-icon><User /></el-icon>
+              <template #title>用户管理</template>
+            </el-menu-item>
           </el-menu>
           
           <!-- 右侧用户信息 -->
@@ -72,17 +76,99 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 // 导入Element Plus图标
 import { User, Document, Picture, SwitchButton, House, Grid, ArrowDown } from '@element-plus/icons-vue'
+
+// WebSocket连接
+const ws = ref(null)
+const wsConnected = ref(false)
 
 const router = useRouter()
 const route = useRoute()
 
 // 活跃菜单索引
 const activeIndex = ref('1')
+
+// WebSocket初始化
+const initWebSocket = () => {
+  try {
+    // 创建WebSocket连接
+    const wsUrl = 'ws://localhost:8082?type=admin'
+    ws.value = new WebSocket(wsUrl)
+    
+    // 监听连接打开
+    ws.value.onopen = () => {
+      console.log('管理端WebSocket连接已打开')
+      wsConnected.value = true
+      ElMessage.success('WebSocket连接已建立，可接收实时通知')
+    }
+    
+    // 监听接收消息
+    ws.value.onmessage = (event) => {
+      console.log('管理端WebSocket收到消息:', event.data)
+      try {
+        const message = JSON.parse(event.data)
+        handleWebSocketMessage(message)
+      } catch (e) {
+        console.error('解析WebSocket消息失败:', e)
+      }
+    }
+    
+    // 监听连接关闭
+    ws.value.onclose = () => {
+      console.log('管理端WebSocket连接已关闭')
+      wsConnected.value = false
+      ElMessage.info('WebSocket连接已关闭')
+    }
+    
+    // 监听连接错误
+    ws.value.onerror = (error) => {
+      console.error('管理端WebSocket连接错误:', error)
+      wsConnected.value = false
+      ElMessage.error('WebSocket连接错误')
+    }
+  } catch (e) {
+    console.error('初始化管理端WebSocket失败:', e)
+    ElMessage.error('初始化WebSocket失败')
+  }
+}
+
+// 处理WebSocket消息
+const handleWebSocketMessage = (message) => {
+  switch (message.type) {
+    case 'new_post':
+      // 显示新帖子审核通知
+      ElMessageBox.confirm(
+        `用户${message.user_name || '匿名用户'}发布了新帖子，需要审核：\n\n标题：${message.postTitle || '无标题帖子'}\n\n是否立即前往审核？`,
+        '新帖子审核通知',
+        {
+          confirmButtonText: '立即审核',
+          cancelButtonText: '稍后处理',
+          type: 'warning'
+        }
+      ).then(() => {
+        // 跳转到帖子管理页面
+        router.push('/home/post-manage')
+      }).catch(() => {
+        // 取消操作
+        ElMessage.info('已取消审核操作，可稍后在帖子管理页面处理')
+      })
+      break
+    default:
+      console.log('未知的WebSocket消息类型:', message.type)
+  }
+}
+
+// 关闭WebSocket连接
+const closeWebSocket = () => {
+  if (ws.value && ws.value.readyState === WebSocket.OPEN) {
+    ws.value.close()
+    wsConnected.value = false
+  }
+}
 
 // 页面加载时设置活跃菜单
 onMounted(() => {
@@ -95,7 +181,17 @@ onMounted(() => {
     activeIndex.value = '3'
   } else if (route.path.includes('/home/resource-')) {
     activeIndex.value = '4'
+  } else if (route.path === '/home/user-manage') {
+    activeIndex.value = '5'
   }
+  
+  // 初始化WebSocket连接
+  initWebSocket()
+})
+
+// 页面卸载时关闭WebSocket连接
+onUnmounted(() => {
+  closeWebSocket()
 })
 
 // 顶部导航菜单切换
@@ -118,6 +214,9 @@ const handleMenuSelect = (index) => {
       break
     case '4-3':
       router.push('/home/resource-other') // 其他资源页
+      break
+    case '5':
+      router.push('/home/user-manage') // 用户管理页
       break
   }
 }

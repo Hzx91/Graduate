@@ -5,6 +5,8 @@ import Home from '../views/Home.vue'
 import PostManage from '../views/PostManage.vue'
 import ResourceManage from '../views/ResourceManage.vue'
 import UserManage from '../views/UserManage.vue'
+import MoodDiaryManage from '../views/MoodDiaryManage.vue'
+import PointsManage from '../views/PointsManage.vue'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -55,6 +57,16 @@ const router = createRouter({
                     path: 'user-manage', // 完整路径：/home/user-manage
                     name: 'UserManage',
                     component: UserManage
+                },
+                {
+                    path: 'mood-diary-manage', // 完整路径：/home/mood-diary-manage
+                    name: 'MoodDiaryManage',
+                    component: MoodDiaryManage
+                },
+                {
+                    path: 'points-manage', // 完整路径：/home/points-manage
+                    name: 'PointsManage',
+                    component: PointsManage
                 }
             ]
         }

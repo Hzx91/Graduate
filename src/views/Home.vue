@@ -30,19 +30,18 @@
               <el-icon><Picture /></el-icon>
               <template #title>资源管理</template>
             </el-menu-item>
-            <!-- 资源分类子菜单 -->
-            <el-sub-menu index="4">
-              <template #title>
-                <el-icon><Grid /></el-icon>
-                <span>资源分类</span>
-              </template>
-              <el-menu-item index="4-1">减压</el-menu-item>
-              <el-menu-item index="4-2">音乐</el-menu-item>
-              <el-menu-item index="4-3">其他</el-menu-item>
-            </el-sub-menu>
+            
             <el-menu-item index="5">
               <el-icon><User /></el-icon>
               <template #title>用户管理</template>
+            </el-menu-item>
+            <el-menu-item index="6">
+              <el-icon><Document /></el-icon>
+              <template #title>积分管理</template>
+            </el-menu-item>
+            <el-menu-item index="7">
+              <el-icon><Document /></el-icon>
+              <template #title>情绪日记管理</template>
             </el-menu-item>
           </el-menu>
           
@@ -171,23 +170,27 @@ const closeWebSocket = () => {
 }
 
 // 页面加载时设置活跃菜单
-onMounted(() => {
-  // 根据当前路由设置活跃菜单
-  if (route.path === '/home') {
-    activeIndex.value = '1'
-  } else if (route.path === '/home/post-manage') {
-    activeIndex.value = '2'
-  } else if (route.path === '/home/resource-manage') {
-    activeIndex.value = '3'
-  } else if (route.path.includes('/home/resource-')) {
-    activeIndex.value = '4'
-  } else if (route.path === '/home/user-manage') {
-    activeIndex.value = '5'
-  }
-  
-  // 初始化WebSocket连接
-  initWebSocket()
-})
+  onMounted(() => {
+    // 根据当前路由设置活跃菜单
+    if (route.path === '/home') {
+      activeIndex.value = '1'
+    } else if (route.path === '/home/post-manage') {
+      activeIndex.value = '2'
+    } else if (route.path === '/home/resource-manage') {
+      activeIndex.value = '3'
+    } else if (route.path.includes('/home/resource-')) {
+      activeIndex.value = '4'
+    } else if (route.path === '/home/user-manage') {
+      activeIndex.value = '5'
+    } else if (route.path === '/home/points-manage') {
+      activeIndex.value = '6'
+    } else if (route.path === '/home/mood-diary-manage') {
+      activeIndex.value = '7'
+    }
+    
+    // 初始化WebSocket连接
+    initWebSocket()
+  })
 
 // 页面卸载时关闭WebSocket连接
 onUnmounted(() => {
@@ -195,31 +198,37 @@ onUnmounted(() => {
 })
 
 // 顶部导航菜单切换
-const handleMenuSelect = (index) => {
-  switch (index) {
-    case '1':
-      router.push('/home') // 首页
-      break
-    case '2':
-      router.push('/home/post-manage') // 帖子管理页
-      break
-    case '3':
-      router.push('/home/resource-manage') // 资源管理页
-      break
-    case '4-1':
-      router.push('/home/resource-relief') // 减压资源页
-      break
-    case '4-2':
-      router.push('/home/resource-music') // 音乐资源页
-      break
-    case '4-3':
-      router.push('/home/resource-other') // 其他资源页
-      break
-    case '5':
-      router.push('/home/user-manage') // 用户管理页
-      break
+  const handleMenuSelect = (index) => {
+    switch (index) {
+      case '1':
+        router.push('/home') // 首页
+        break
+      case '2':
+        router.push('/home/post-manage') // 帖子管理页
+        break
+      case '3':
+        router.push('/home/resource-manage') // 资源管理页
+        break
+      case '4-1':
+        router.push('/home/resource-relief') // 减压资源页
+        break
+      case '4-2':
+        router.push('/home/resource-music') // 音乐资源页
+        break
+      case '4-3':
+        router.push('/home/resource-other') // 其他资源页
+        break
+      case '5':
+        router.push('/home/user-manage') // 用户管理页
+        break
+      case '6':
+        router.push('/home/points-manage') // 积分管理页
+        break
+      case '7':
+        router.push('/home/mood-diary-manage') // 情绪日记管理页
+        break
+    }
   }
-}
 
 // 退出登录
 const logout = () => {

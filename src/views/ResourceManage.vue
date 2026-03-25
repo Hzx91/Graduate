@@ -86,32 +86,79 @@
               >
                 <el-option label="减压" value="减压"></el-option>
                 <el-option label="音乐" value="音乐"></el-option>
+                <el-option label="白噪音" value="白噪音"></el-option>
                 <el-option label="其他" value="其他"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
         </el-row>
-        
-        <el-row>
+        <el-row :gutter="20">
           <el-col :span="24">
-            <el-form-item label="选择文件">
+            <el-form-item label="适用场景">
+              <el-input
+                v-model="resourceTags"
+                placeholder="例如：学习/工作、冥想/放松、助眠/解压"
+                size="large"
+              ></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="封面图片">
               <el-upload
                 class="upload-demo"
-                action="http://localhost:8082/api/admin/uploadResource"
-                name="resourceFile"
-                accept=".jpg,.png,.mp3,.mp4"
+                action="http://localhost:8082/api/admin/uploadFile"
+                name="coverFile"
+                accept=".jpg,.png"
                 :limit="1"
-                :data="{ name: resourceName, desc: resourceDesc, category: resourceCategory }"
-                @success="handleUploadSuccess"
+                :auto-upload="true"
+                @success="handleCoverUploadSuccess"
                 @error="handleUploadError"
-                :file-list="fileList"
+                :file-list="coverFileList"
               >
                 <el-button type="primary" size="large">
                   <el-icon><Plus /></el-icon>
-                  点击选择文件
+                  选择封面图片
                 </el-button>
-                <div class="el-upload__tip">支持jpg/png/mp3/mp4文件，不超过20MB</div>
+                <div class="el-upload__tip">支持jpg/png文件，不超过5MB</div>
               </el-upload>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="音频文件">
+              <el-upload
+                class="upload-demo"
+                action="http://localhost:8082/api/admin/uploadFile"
+                name="audioFile"
+                accept=".mp3"
+                :limit="1"
+                :auto-upload="true"
+                @success="handleAudioUploadSuccess"
+                @error="handleUploadError"
+                :file-list="audioFileList"
+              >
+                <el-button type="primary" size="large">
+                  <el-icon><Plus /></el-icon>
+                  选择音频文件
+                </el-button>
+                <div class="el-upload__tip">支持mp3文件，不超过20MB</div>
+              </el-upload>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item>
+              <el-button type="primary" size="large" @click="submitResource" :disabled="!coverUrl">
+                <el-icon><Upload /></el-icon>
+                发布资源
+              </el-button>
+              <el-button size="large" @click="forceEnableSubmit">
+                <el-icon><Warning /></el-icon>
+                临时启用发布
+              </el-button>
             </el-form-item>
           </el-col>
         </el-row>
@@ -189,7 +236,7 @@
 import axios from 'axios'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { ElCard, ElDivider, ElUpload, ElButton, ElTable, ElTableColumn, ElMessage, ElImage } from 'element-plus'
+import { ElCard, ElDivider, ElUpload, ElButton, ElTable, ElTableColumn, ElMessage, ElImage, ElDialog, ElForm, ElFormItem, ElInput, ElSelect, ElOption } from 'element-plus'
 
 // 响应式变量
 const tableData = ref([])  
@@ -197,7 +244,11 @@ const allResources = ref([]) // 存储所有资源，用于全局搜索
 const resourceName = ref('')  
 const resourceDesc = ref('')  
 const resourceCategory = ref('减压') // 默认分类为减压
-const fileList = ref([]) // 上传文件列表
+const resourceTags = ref('') // 适用场景
+const coverFileList = ref([]) // 封面图片文件列表
+const audioFileList = ref([]) // 音频文件列表
+const coverUrl = ref('') // 封面图片URL
+const audioUrl = ref('') // 音频文件URL
 const searchText = ref('') // 搜索关键字
 const route = useRoute() // 获取当前路由
 
@@ -242,24 +293,82 @@ const getResourceList = async () => {
   }
 }
 
-// 上传成功回调：即时添加到列表（不用等刷新）
-const handleUploadSuccess = async (res) => {
+// 封面图片上传成功回调
+const handleCoverUploadSuccess = (response, file, fileList) => {
   try {
+    const res = response
+    console.log('封面图片上传响应：', res)
     if (res.status === 0) {
-      ElMessage.success('上传成功！')
-      // 1. 清空输入框和文件列表
-      resourceName.value = ''
-      resourceDesc.value = ''
-      fileList.value = []
-      // 2. 把新上传的资源即时添加到表格（前端同步显示）
-      tableData.value.unshift(res.data)
-      // 3. 同步刷新前端页面数据（确保用户端也能看到）
-      await getResourceList()
+      ElMessage.success('封面图片上传成功！')
+      coverUrl.value = res.data.url
+      coverFileList.value = [{ name: file.name, url: res.data.url }]
     } else {
-      ElMessage.error('上传失败：' + res.message)
+      ElMessage.error('封面图片上传失败：' + res.message)
     }
   } catch (err) {
-    ElMessage.error('上传回调出错：' + err.message)
+    ElMessage.error('封面图片上传回调出错：' + err.message)
+    console.error('封面图片上传回调错误：', err)
+  }
+}
+
+// 音频文件上传成功回调
+const handleAudioUploadSuccess = (response, file, fileList) => {
+  try {
+    const res = response
+    console.log('音频文件上传响应：', res)
+    if (res.status === 0) {
+      ElMessage.success('音频文件上传成功！')
+      audioUrl.value = res.data.url
+      audioFileList.value = [{ name: file.name, url: res.data.url }]
+    } else {
+      ElMessage.error('音频文件上传失败：' + res.message)
+    }
+  } catch (err) {
+    ElMessage.error('音频文件上传回调出错：' + err.message)
+    console.error('音频文件上传回调错误：', err)
+  }
+}
+
+// 临时解除发布按钮的禁用状态，方便调试
+const forceEnableSubmit = () => {
+  // 临时设置 audioUrl 为一个非空值，使发布按钮可用
+  if (!audioUrl.value) {
+    audioUrl.value = 'http://localhost:8082/resources/temp-audio.mp3'
+    ElMessage.info('临时启用发布按钮，用于调试')
+  }
+}
+
+// 提交资源
+const submitResource = async () => {
+  try {
+    const res = await axios.post('/api/admin/uploadResource', {
+      name: resourceName.value,
+      desc: resourceDesc.value,
+      category: resourceCategory.value,
+      tags: resourceTags.value,
+      coverUrl: coverUrl.value,
+      audioUrl: audioUrl.value
+    })
+    
+    if (res.data.status === 0) {
+      ElMessage.success('资源发布成功！')
+      // 清空表单
+      resourceName.value = ''
+      resourceDesc.value = ''
+      resourceCategory.value = '减压'
+      resourceTags.value = ''
+      coverFileList.value = []
+      audioFileList.value = []
+      coverUrl.value = ''
+      audioUrl.value = ''
+      // 刷新资源列表
+      await getResourceList()
+    } else {
+      ElMessage.error('资源发布失败：' + res.message)
+    }
+  } catch (err) {
+    ElMessage.error('资源发布出错：' + err.message)
+    console.log('发布错误：', err)
   }
 }
 

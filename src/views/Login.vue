@@ -47,15 +47,38 @@ const login = () => {
 <style scoped>
 /* 登录页面容器 */
 .login-container {
+  font-family: '微软雅黑';
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(135deg, #6b46c1 0%, #805ad5 50%, #d53f8c 100%);
+  background: 
+    linear-gradient(180deg,
+      rgba(173, 216, 255, 0.5) 0%,    /* 半透明浅冰蓝 */
+      rgba(135, 206, 235, 0.5) 50%,  /* 半透明中冰蓝 */
+      rgba(96, 168, 230, 0.5) 100%   /* 半透明深冰蓝 */
+    ),
+    url('../assets/bz4.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   display: flex;
   justify-content: center;
   align-items: center;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   position: relative;
   overflow: hidden;
+  filter: brightness(0.85) saturate(0.9); /* 调暗+降饱和，让登录框更突出 */
+}
+
+/* 丁达尔光效（增强氛围感） */
+.login-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.2) 0%, transparent 50%);
+  pointer-events: none;
 }
 
 /* 背景装饰效果 */
@@ -84,11 +107,11 @@ const login = () => {
 .login-card {
   width: 420px;
   padding: 40px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(242, 239, 239, 0.084);
+  backdrop-filter: blur(12px); /* 增强毛玻璃通透感 */
+  border: 1px solid rgba(255, 255, 255, 0.3); /* 加一层细微白边，让框体更清晰 */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); /* 加一点柔和阴影，让框体浮起来 */
   z-index: 1;
   transition: all 0.3s ease;
   transform: translateY(0);
@@ -96,20 +119,16 @@ const login = () => {
 
 .login-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
 /* 登录标题 */
 .login-title {
   text-align: center;
   margin-bottom: 30px;
-  font-size: 32px;
-  font-weight: 700;
-  color: #4a5568;
-  background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 28px; /* 稍放大字号 */
+  font-weight: 600; /* 加粗字重 */
+  color: #409EFF; /* 用主题蓝，更醒目 */
   position: relative;
   padding-bottom: 15px;
 }
@@ -121,8 +140,8 @@ const login = () => {
   left: 50%;
   transform: translateX(-50%);
   width: 60px;
-  height: 3px;
-  background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
+  height: 2px;
+  background: linear-gradient(90deg, #409EFF, #83bafc); /* 改成渐变线 */
   border-radius: 2px;
 }
 
@@ -137,32 +156,34 @@ const login = () => {
 }
 
 .login-card :deep(.el-form-item__label) {
-  font-weight: 600;
-  color: #4a5568;
+  font-weight: 500;
+  color: #606266; /* 用稍深的灰色，比之前更醒目 */
   font-size: 14px;
   padding-bottom: 8px;
   display: block;
   text-align: left;
+  margin-bottom: 8px;
 }
 
 /* 输入框样式 */
 .login-card :deep(.el-input__wrapper) {
-  border-radius: 12px;
-  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  border: 1px solid #e4e7ed;
   transition: all 0.3s ease;
   background: rgba(255, 255, 255, 0.9);
   height: 50px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); /* 加内阴影，让输入区有凹陷质感 */
 }
 
 .login-card :deep(.el-input__wrapper:hover) {
-  border-color: #6b46c1;
-  box-shadow: 0 4px 12px rgba(107, 70, 193, 0.2);
+  border-color: #409EFF;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
   transform: translateY(-1px);
 }
 
 .login-card :deep(.el-input__wrapper.is-focus) {
-  border-color: #6b46c1;
-  box-shadow: 0 4px 16px rgba(107, 70, 193, 0.3);
+  border-color: #409EFF;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1); /* 聚焦时的主题色光环 */
   transform: translateY(-1px);
 }
 
@@ -174,6 +195,10 @@ const login = () => {
   line-height: 46px;
 }
 
+.login-card :deep(.el-input__inner::placeholder) {
+  color: #c0c4cc; /* 浅灰，和标签形成层级对比 */
+}
+
 /* 密码输入框 */
 .login-card :deep(.el-input--password .el-input__inner) {
   padding-right: 40px;
@@ -183,25 +208,25 @@ const login = () => {
 .login-btn {
   width: 100%;
   height: 50px;
-  border-radius: 12px;
+  border-radius: 8px;
   font-size: 16px;
-  font-weight: 600;
-  background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
+  font-weight: 500;
+  background: #409EFF;
   border: none;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(107, 70, 193, 0.3);
+  transition: all 0.3s ease; /* 加过渡动画 */
+  box-shadow: 0 4px 15px rgba(64, 158, 255, 0.3);
   margin-top: 10px;
 }
 
 .login-btn:hover {
-  background: linear-gradient(135deg, #553c9a 0%, #6b46c1 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(107, 70, 193, 0.4);
+  background: #337ecc; /* hover 时颜色稍深 */
+  transform: translateY(-1px); /* 微微上浮，增强按压感 */
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3); /* 加发光阴影 */
 }
 
 .login-btn:active {
   transform: translateY(0);
-  box-shadow: 0 4px 12px rgba(107, 70, 193, 0.3);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
 }
 
 /* 按钮加载状态 */

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 // 引入所有页面组件
 import Login from '../views/Login.vue'
 import Home from '../views/Home.vue'
+import Dashboard from '../views/Dashboard.vue'
 import PostManage from '../views/PostManage.vue'
 import ResourceManage from '../views/ResourceManage.vue'
 import UserManage from '../views/UserManage.vue'
@@ -25,6 +26,11 @@ const router = createRouter({
             name: 'Home',
             component: Home,
             children: [ // 首页的子路由
+                {
+                    path: '', // 默认子路由
+                    name: 'Dashboard',
+                    component: Dashboard
+                },
                 {
                     path: 'post-manage', // 完整路径：/home/post-manage
                     name: 'PostManage',

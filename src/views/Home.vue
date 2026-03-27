@@ -1,75 +1,80 @@
 <template>
   <div class="home-container">
-    <!-- 顶部导航栏布局 -->
-    <el-container>
-      <!-- 顶部导航栏 -->
-      <el-header class="top-header">
-        <div class="header-content">
-          <!-- 左侧logo -->
-          <div class="logo">
-            <el-icon class="logo-icon"><User /></el-icon>
-            <span class="logo-text">快乐心球管理后台</span>
-          </div>
-          
-          <!-- 中间导航菜单 -->
-          <el-menu
-            :default-active="activeIndex"
-            mode="horizontal"
-            class="nav-menu"
-            @select="handleMenuSelect"
-          >
-            <el-menu-item index="1">
-              <el-icon><House /></el-icon>
-              <template #title>首页</template>
-            </el-menu-item>
-            <el-menu-item index="2">
-              <el-icon><Document /></el-icon>
-              <template #title>帖子管理</template>
-            </el-menu-item>
-            <el-menu-item index="3">
-              <el-icon><Picture /></el-icon>
-              <template #title>资源管理</template>
-            </el-menu-item>
-            
-            <el-menu-item index="5">
-              <el-icon><User /></el-icon>
-              <template #title>用户管理</template>
-            </el-menu-item>
-            <el-menu-item index="6">
-              <el-icon><Document /></el-icon>
-              <template #title>积分管理</template>
-            </el-menu-item>
-            <el-menu-item index="7">
-              <el-icon><Document /></el-icon>
-              <template #title>情绪日记管理</template>
-            </el-menu-item>
-          </el-menu>
-          
-          <!-- 右侧用户信息 -->
-          <div class="user-info">
-            <el-dropdown>
-              <span class="user-dropdown">
-                <el-avatar :size="36" src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"></el-avatar>
-                <span class="admin-text">管理员</span>
-                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-              </span>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item>个人中心</el-dropdown-item>
-                  <el-dropdown-item>设置</el-dropdown-item>
-                  <el-dropdown-item divided @click="logout">退出登录</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </div>
+    <!-- 左侧导航栏布局 -->
+    <el-container style="height: 100vh; overflow: hidden;">
+      <!-- 左侧导航栏 -->
+      <el-aside width="240px" class="left-sidebar">
+        <!-- 顶部logo -->
+        <div class="logo">
+          <el-icon class="logo-icon"><User /></el-icon>
+          <span class="logo-text">快乐心球管理后台</span>
         </div>
-      </el-header>
+        
+        <!-- 导航菜单 -->
+        <el-menu
+          :default-active="activeIndex"
+          mode="vertical"
+          class="nav-menu"
+          @select="handleMenuSelect"
+        >
+          <el-menu-item index="1">
+            <el-icon><House /></el-icon>
+            <template #title>首页</template>
+          </el-menu-item>
+          <el-menu-item index="2">
+            <el-icon><Document /></el-icon>
+            <template #title>情绪日记管理</template>
+          </el-menu-item>
+          <el-menu-item index="3">
+            <el-icon><Picture /></el-icon>
+            <template #title>资源管理</template>
+          </el-menu-item>
+          <el-menu-item index="5">
+            <el-icon><User /></el-icon>
+            <template #title>帖子管理</template>
+          </el-menu-item>
+          <el-menu-item index="6">
+            <el-icon><Document /></el-icon>
+            <template #title>用户管理</template>
+          </el-menu-item>
+          <el-menu-item index="7">
+            <el-icon><Document /></el-icon>
+            <template #title>积分管理</template>
+          </el-menu-item>
+        </el-menu>
+      </el-aside>
 
-      <!-- 主内容区：渲染子路由页面 -->
-      <el-main class="main-content">
-        <!-- 子路由出口：帖子/资源管理页在这里渲染 -->
-        <router-view></router-view>
-      </el-main>
+      <!-- 右侧主内容区 -->
+      <el-container>
+        <!-- 顶部用户信息栏 -->
+        <el-header class="top-header">
+          <div class="header-content">
+            <!-- 右侧用户信息 -->
+            <div class="user-info">
+              <el-dropdown>
+                <span class="user-dropdown">
+                  <el-avatar :size="36" src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"></el-avatar>
+                  <span class="admin-text">管理员</span>
+                  <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </span>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item>个人中心</el-dropdown-item>
+                    <el-dropdown-item>设置</el-dropdown-item>
+                    <el-dropdown-item divided @click="logout">退出登录</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+          </div>
+        </el-header>
+
+        <!-- 主内容区：渲染子路由页面 -->
+        <el-main class="main-content">
+          <!-- 子路由出口：帖子/资源管理页在这里渲染 -->
+          <router-view></router-view>
+        </el-main>
+      </el-container>
     </el-container>
   </div>
 </template>
@@ -89,7 +94,7 @@ const router = useRouter()
 const route = useRoute()
 
 // 活跃菜单索引
-const activeIndex = ref('1')
+const activeIndex = ref('1');
 
 // WebSocket初始化
 const initWebSocket = () => {
@@ -204,7 +209,8 @@ onUnmounted(() => {
         router.push('/home') // 首页
         break
       case '2':
-        router.push('/home/post-manage') // 帖子管理页
+        router.push('/home/mood-diary-manage') // 情绪日记管理页
+        
         break
       case '3':
         router.push('/home/resource-manage') // 资源管理页
@@ -219,13 +225,15 @@ onUnmounted(() => {
         router.push('/home/resource-other') // 其他资源页
         break
       case '5':
-        router.push('/home/user-manage') // 用户管理页
+        router.push('/home/post-manage') // 帖子管理页
+        
         break
       case '6':
-        router.push('/home/points-manage') // 积分管理页
+        router.push('/home/user-manage') // 用户管理页
+        
         break
       case '7':
-        router.push('/home/mood-diary-manage') // 情绪日记管理页
+        router.push('/home/points-manage') // 积分管理页
         break
     }
   }
@@ -245,22 +253,17 @@ const logout = () => {
   background-color: #f5f7fa;
 }
 
-/* 顶部导航栏样式 */
-.top-header {
-  background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
-  box-shadow: 0 2px 12px rgba(107, 70, 193, 0.15);
-  padding: 0;
-  height: 70px;
+/* 左侧侧边栏样式 */
+.left-sidebar {
+  background: linear-gradient(180deg,
+		  rgba(173, 216, 255, 0.9) 0%,    /* 浅冰蓝 */
+		  rgba(135, 206, 235, 0.9) 50%,  /* 中冰蓝 */
+		  rgba(96, 168, 230, 0.9) 100%   /* 深冰蓝 */
+		);
+  		box-shadow: 2px 0 20px rgba(142, 126, 165, 0.2);
+  padding: 20px 0;
   display: flex;
-  align-items: center;
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0 30px;
+  flex-direction: column;
 }
 
 /* Logo样式 */
@@ -268,6 +271,10 @@ const logout = () => {
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 0 24px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
 }
 
 .logo-icon {
@@ -276,7 +283,7 @@ const logout = () => {
 }
 
 .logo-text {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: bold;
   color: #fff;
 }
@@ -284,17 +291,25 @@ const logout = () => {
 /* 导航菜单样式 */
 .nav-menu {
   background-color: transparent;
-  border-bottom: none;
+  border-right: none;
   flex: 1;
-  margin: 0 40px;
+  padding: 0 12px;
+  transition: all 0.3s ease;
 }
 
 .nav-menu :deep(.el-menu-item) {
-  color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.8);
   font-size: 15px;
-  height: 70px;
-  line-height: 70px;
-  padding: 0 25px;
+  height: 56px;
+  line-height: 56px;
+  padding: 0 24px;
+  margin: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
 }
 
 .nav-menu :deep(.el-menu-item:hover) {
@@ -303,17 +318,32 @@ const logout = () => {
 }
 
 .nav-menu :deep(.el-menu-item.is-active) {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  border-bottom: 3px solid #fff;
+  background: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%);
+  color: #ffffff;
+  font-weight: 600;
+  position: relative;
+}
+
+.nav-menu :deep(.el-menu-item.is-active::before) {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 20%;
+  height: 60%;
+  width: 4px;
+  background: #ffffff;
+  border-radius: 0 4px 4px 0;
 }
 
 .nav-menu :deep(.el-sub-menu__title) {
   color: rgba(255, 255, 255, 0.9);
   font-size: 15px;
-  height: 70px;
-  line-height: 70px;
-  padding: 0 25px;
+  height: 56px;
+  line-height: 56px;
+  padding: 0 24px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
 }
 
 .nav-menu :deep(.el-sub-menu__title:hover) {
@@ -322,16 +352,39 @@ const logout = () => {
 }
 
 .nav-menu :deep(.el-sub-menu .el-menu-item) {
-  background-color: #fff;
+  background-color: rgba(255, 255, 255, 0.9);
   color: #333;
-  height: 50px;
-  line-height: 50px;
-  padding: 0 30px;
+  height: 48px;
+  line-height: 48px;
+  padding: 0 48px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
 }
 
 .nav-menu :deep(.el-sub-menu .el-menu-item:hover) {
   background-color: #f5f7fa;
   color: #6b46c1;
+}
+
+
+
+/* 顶部用户信息栏样式 */
+.top-header {
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  padding: 0;
+  height: 60px;
+  display: flex;
+  align-items: center;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  padding: 0 30px;
 }
 
 /* 用户信息样式 */
@@ -346,7 +399,7 @@ const logout = () => {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  color: #fff;
+  color: #333;
 }
 
 .admin-text {
@@ -355,11 +408,11 @@ const logout = () => {
 }
 
 .user-dropdown:hover {
-  color: #fff;
+  color: #6b46c1;
 }
 
 .user-dropdown :deep(.el-icon-arrow-down) {
-  color: #fff;
+  color: #666;
   font-size: 14px;
 }
 
@@ -367,27 +420,27 @@ const logout = () => {
 .main-content {
   background-color: #f5f7fa;
   padding: 20px;
-  min-height: calc(100vh - 70px);
+  min-height: calc(100vh - 60px);
 }
 
 /* 响应式设计 */
 @media (max-width: 1200px) {
-  .header-content {
-    padding: 0 20px;
-  }
-  
-  .nav-menu {
-    margin: 0 20px;
+  .left-sidebar {
+    width: 200px !important;
   }
   
   .logo-text {
-    font-size: 18px;
+    font-size: 16px;
   }
   
   .nav-menu :deep(.el-menu-item),
   .nav-menu :deep(.el-sub-menu__title) {
-    padding: 0 20px;
+    padding: 0 16px;
     font-size: 14px;
+  }
+  
+  .nav-menu :deep(.el-sub-menu .el-menu-item) {
+    padding: 0 32px;
   }
 }
 </style>

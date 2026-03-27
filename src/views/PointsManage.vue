@@ -24,8 +24,7 @@
     <!-- 积分列表 -->
     <div class="points-list">
       <el-table :data="pointsList" style="width: 100%" border>
-        <el-table-column prop="user_id" label="用户ID" width="100" />
-        <el-table-column prop="user_name" label="用户名" width="150" />
+        <el-table-column prop="user_name" label="用户ID" width="150" />
         <el-table-column prop="nick_name" label="昵称" width="150" />
         <el-table-column prop="points" label="积分" width="100">
           <template #default="scope">

@@ -356,7 +356,7 @@ const deleteResource = async (id) => {
   font-weight: 700;
   color: #4a5568;
   margin: 0 0 10px 0;
-  background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
+  background: rgba(90, 165, 222, 0.7);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -397,12 +397,12 @@ const deleteResource = async (id) => {
 }
 
 .search-container :deep(.el-input__wrapper:hover) {
-  border-color: #6b46c1;
+  border-color:rgba(90, 165, 222, 0.7);
   box-shadow: 0 4px 12px rgba(107, 70, 193, 0.2);
 }
 
 .search-container :deep(.el-input__wrapper.is-focus) {
-  border-color: #6b46c1;
+  border-color: rgba(90, 165, 222, 0.7);
   box-shadow: 0 4px 16px rgba(107, 70, 193, 0.3);
 }
 
@@ -421,12 +421,13 @@ const deleteResource = async (id) => {
 }
 
 .search-container :deep(.el-button--primary) {
-  background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
+  background: rgba(90, 165, 222, 0.7);
+  box-shadow: 0 4px 15px rgba(66, 165, 245, 0.3);
   border: none;
 }
 
 .search-container :deep(.el-button--primary:hover) {
-  background: linear-gradient(135deg, #553c9a 0%, #6b46c1 100%);
+  background: rgba(90, 165, 222, 1);
 }
 
 /* 统计区域 */
@@ -456,7 +457,8 @@ const deleteResource = async (id) => {
 
 .stat-icon {
   font-size: 36px;
-  color: #6b46c1;
+  color: rgba(90, 165, 222, 0.7);
+  
 }
 
 .stat-content {
@@ -524,19 +526,19 @@ const deleteResource = async (id) => {
 
 .upload-form :deep(.el-input__wrapper:hover),
 .upload-form :deep(.el-select__wrapper:hover) {
-  border-color: #6b46c1;
-  box-shadow: 0 4px 12px rgba(107, 70, 193, 0.2);
+  border-color: rgba(90, 165, 222, 0.7);
+  box-shadow: 0 4px 16px rgba(107, 70, 193, 0.3);
 }
 
 .upload-form :deep(.el-input__wrapper.is-focus),
 .upload-form :deep(.el-select__wrapper.is-focus) {
-  border-color: #6b46c1;
+  border-color: rgba(90, 165, 222, 0.7);
   box-shadow: 0 4px 16px rgba(107, 70, 193, 0.3);
 }
 
 /* 上传组件 */
 .upload-form :deep(.el-upload__tip) {
-  color: #718096;
+  color: #8bc0e8;
   font-size: 13px;
 }
 
@@ -547,12 +549,13 @@ const deleteResource = async (id) => {
 }
 
 .table-card :deep(.el-table__header-wrapper) {
-  background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
+  background: rgba(90, 165, 222, 0.7);
+  box-shadow: 0 4px 15px rgba(66, 165, 245, 0.3);
 }
 
 .table-card :deep(.el-table__header-wrapper th) {
   background: transparent;
-  color: #fff;
+  color: #8bc0e8;
   font-weight: 600;
   font-size: 14px;
   text-align: center;
@@ -580,7 +583,7 @@ const deleteResource = async (id) => {
 
 /* 资源链接样式 */
 .resource-link {
-  color: #6b46c1;
+  color: rgba(90, 165, 222, 0.7);
   text-decoration: none;
   font-size: 13px;
   transition: all 0.3s ease;
@@ -595,7 +598,7 @@ const deleteResource = async (id) => {
 }
 
 .resource-link:hover {
-  color: #553c9a;
+  color: rgba(90, 165, 222, 0.7);
   background: rgba(107, 70, 193, 0.1);
   transform: translateY(-1px);
 }

@@ -59,7 +59,7 @@
       >
         <el-table-column type="index" label="序号" width="80" align="center"></el-table-column>
         <el-table-column prop="nickname" label="昵称" width="180"></el-table-column>
-        <el-table-column prop="username" label="用户名" width="180"></el-table-column>
+        <el-table-column prop="username" label="ID" width="180"></el-table-column>
         <el-table-column prop="created_at" label="创建时间" width="220">
           <template #default="scope">
             <span>{{ formatDateTime(scope.row.created_at) }}</span>

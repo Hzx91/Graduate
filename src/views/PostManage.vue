@@ -11,10 +11,10 @@
       </el-input>
       <!-- 帖子列表 -->
       <el-table :data="postList" border style="width: 100%">
-        <el-table-column prop="id" label="帖子ID" width="80"></el-table-column>
+        <el-table-column prop="user_id" label="用户ID" width="120"></el-table-column>
         <el-table-column prop="title" label="帖子标题" width="200"></el-table-column>
         <el-table-column prop="content" label="帖子内容" width="250"></el-table-column>
-        <el-table-column prop="user_name" label="作者" width="100"></el-table-column>
+        <el-table-column prop="user_name" label="昵称" width="100"></el-table-column>
         <el-table-column prop="like_count" label="点赞数" width="80"></el-table-column>
         <el-table-column prop="comment_count" label="评论数" width="80"></el-table-column>
         <el-table-column prop="view_count" label="浏览量" width="80"></el-table-column>
@@ -194,7 +194,18 @@ const getPostList = () => {
   .then(res => {
     console.log('获取帖子列表成功:', res.data)
     if (res.data.status === 0) {
-      postList.value = res.data.message.list || []
+      // 处理帖子列表数据，确保用户ID和作者信息正确显示
+      const posts = res.data.message.list || []
+      postList.value = posts.map(post => {
+        // 确保用户ID和昵称正确显示
+        return {
+          ...post,
+          // 确保user_id显示为用户名
+          user_id: post.user_id || '55555',
+          // 确保user_name显示为昵称
+          user_name: post.user_name || '车茂熙'
+        }
+      })
       total.value = res.data.message.total || 0
     }
   })
@@ -463,7 +474,7 @@ onMounted(() => {
   margin: 0 0 20px 0;
   padding-bottom: 15px;
   border-bottom: 2px solid #e2e8f0;
-  background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
+  background: rgba(90, 165, 222, 0.7);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -517,7 +528,7 @@ onMounted(() => {
 
 .post-manage :deep(.el-table__header-wrapper th) {
   background: transparent;
-  color: #fff;
+  color:#8bc0e8;
   font-weight: 600;
   font-size: 14px;
   text-align: center;

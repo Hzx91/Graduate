@@ -12,12 +12,16 @@
       <!-- 帖子列表 -->
       <el-table :data="postList" border style="width: 100%">
         <el-table-column prop="user_id" label="用户ID" width="120"></el-table-column>
-        <el-table-column prop="title" label="帖子标题" width="200"></el-table-column>
-        <el-table-column prop="content" label="帖子内容" width="250"></el-table-column>
-        <el-table-column prop="user_name" label="昵称" width="100"></el-table-column>
-        <el-table-column prop="like_count" label="点赞数" width="80"></el-table-column>
-        <el-table-column prop="comment_count" label="评论数" width="80"></el-table-column>
-        <el-table-column prop="view_count" label="浏览量" width="80"></el-table-column>
+        <el-table-column prop="title" label="帖子标题" min-width="180"></el-table-column>
+        <el-table-column prop="content" label="帖子内容" min-width="250">
+          <template #default="scope">
+            <span>{{ scope.row.content || '无内容' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="user_name" label="昵称" width="150"></el-table-column>
+        <el-table-column prop="like_count" label="点赞数" width="100"></el-table-column>
+        <el-table-column prop="comment_count" label="评论数" width="100"></el-table-column>
+        <el-table-column prop="view_count" label="浏览量" width="100"></el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="scope">
             <el-tag v-if="scope.row.status === 0" type="warning">待审核</el-tag>
@@ -25,14 +29,14 @@
             <el-tag v-else type="danger">已拒绝</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="is_top" label="置顶" width="80">
+        <el-table-column prop="is_top" label="置顶" width="100">
           <template #default="scope">
             <el-tag v-if="scope.row.is_top" type="info">已置顶</el-tag>
             <el-tag v-else type="default">未置顶</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="create_time" label="发布时间" width="180"></el-table-column>
-        <el-table-column label="操作" width="280">
+        <el-table-column label="操作" width="350" fixed="right">
           <template #default="scope">
             <el-button size="small" type="primary" @click="viewDetail(scope.row)">查看详情</el-button>
             <el-button size="small" type="warning" @click="toggleTop(scope.row)" v-if="scope.row.status === 1">
@@ -500,9 +504,10 @@ onMounted(() => {
 
 /* 搜索按钮样式 */
 .post-manage :deep(.el-input__append-inner .el-button) {
-  border-radius: 10px;
+  border-radius: 12px;
   font-weight: 600;
-  background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
+  background: rgba(90, 165, 222, 0.7);
+  box-shadow: 0 4px 15px rgba(66, 165, 245, 0.3);
   border: none;
   color: #fff;
   transition: all 0.3s ease;
@@ -512,27 +517,22 @@ onMounted(() => {
 .post-manage :deep(.el-input__append-inner .el-button:hover) {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-  background: linear-gradient(135deg, #553c9a 0%, #6b46c1 100%);
+  background: rgba(90, 165, 222, 1);
 }
 
 /* 表格样式 */
 .post-manage :deep(.el-table) {
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
   margin-top: 20px;
 }
 
-.post-manage :deep(.el-table__header-wrapper) {
-  background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
-}
-
 .post-manage :deep(.el-table__header-wrapper th) {
-  background: transparent;
-  color:#8bc0e8;
+  background: #f7fafc;
   font-weight: 600;
   font-size: 14px;
-  text-align: center;
-  padding: 16px;
+  text-align: left;
+  padding: 12px;
 }
 
 .post-manage :deep(.el-table__body-wrapper tr) {
@@ -546,8 +546,8 @@ onMounted(() => {
 }
 
 .post-manage :deep(.el-table__body-wrapper td) {
-  padding: 16px;
-  text-align: center;
+  padding: 12px;
+  text-align: left;
   color: #4a5568;
   font-size: 14px;
   border-bottom: 1px solid #f7fafc;
@@ -581,39 +581,43 @@ onMounted(() => {
 }
 
 .post-manage :deep(.el-button--primary) {
-  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+  background: rgba(90, 165, 222, 0.7);
+  box-shadow: 0 4px 15px rgba(66, 165, 245, 0.3);
   border: none;
 }
 
 .post-manage :deep(.el-button--primary:hover) {
-  background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
+  background: rgba(90, 165, 222, 1);
 }
 
 .post-manage :deep(.el-button--warning) {
-  background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+  background: rgba(237, 137, 54, 0.7);
+  box-shadow: 0 4px 15px rgba(237, 137, 54, 0.3);
   border: none;
 }
 
 .post-manage :deep(.el-button--warning:hover) {
-  background: linear-gradient(135deg, #dd6b20 0%, #c05621 100%);
+  background: rgba(237, 137, 54, 1);
 }
 
 .post-manage :deep(.el-button--success) {
-  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  background: rgba(72, 187, 120, 0.7);
+  box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
   border: none;
 }
 
 .post-manage :deep(.el-button--success:hover) {
-  background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+  background: rgba(72, 187, 120, 1);
 }
 
 .post-manage :deep(.el-button--danger) {
-  background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+  background: rgba(229, 62, 62, 0.7);
+  box-shadow: 0 4px 15px rgba(229, 62, 62, 0.3);
   border: none;
 }
 
 .post-manage :deep(.el-button--danger:hover) {
-  background: linear-gradient(135deg, #c53030 0%, #9b2c2c 100%);
+  background: rgba(229, 62, 62, 1);
 }
 
 /* 标签样式 */

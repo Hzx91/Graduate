@@ -39,7 +39,7 @@
           </div>
         </div>
         <div class="stat-item">
-          <el-icon class="stat-icon"><DocumentCheck /></el-icon>
+          <el-icon class="stat-icon"><Check /></el-icon>
           <div class="stat-content">
             <div class="stat-number">{{ filteredResources.length }}</div>
             <div class="stat-label">当前显示</div>
@@ -65,6 +65,7 @@
                 v-model="resourceName"
                 placeholder="例如：正念呼吸音乐/助眠视频"
                 size="large"
+                :prefix-icon="Search"
               ></el-input>
             </el-form-item>
           </el-col>
@@ -74,6 +75,7 @@
                 v-model="resourceDesc"
                 placeholder="例如：10分钟正念呼吸放松音乐/5分钟助眠视频"
                 size="large"
+                :prefix-icon="Document"
               ></el-input>
             </el-form-item>
           </el-col>
@@ -83,6 +85,7 @@
                 v-model="resourceCategory"
                 placeholder="选择资源分类"
                 size="large"
+                :prefix-icon="Grid"
               >
                 <el-option label="减压" value="减压"></el-option>
                 <el-option label="音乐" value="音乐"></el-option>
@@ -97,23 +100,30 @@
         <el-row>
           <el-col :span="24">
             <el-form-item label="选择文件">
-              <el-upload
-                class="upload-demo"
-                action="http://localhost:8082/api/admin/uploadResource"
-                name="resourceFile"
-                accept=".jpg,.png,.mp3,.mp4"
-                :limit="1"
-                :data="{ name: resourceName, desc: resourceDesc, category: resourceCategory }"
-                @success="handleUploadSuccess"
-                @error="handleUploadError"
-                :file-list="fileList"
-              >
-                <el-button type="primary" size="large">
-                  <el-icon><Plus /></el-icon>
-                  点击选择文件
-                </el-button>
-                <div class="el-upload__tip">支持jpg/png/mp3/mp4文件，不超过20MB</div>
-              </el-upload>
+              <div class="upload-container">
+                <el-upload
+                  class="upload-demo"
+                  action="http://localhost:8082/api/admin/uploadResource"
+                  name="resourceFile"
+                  accept=".jpg,.png,.mp3,.mp4"
+                  :limit="1"
+                  :data="{ name: resourceName, desc: resourceDesc, category: resourceCategory }"
+                  @success="handleUploadSuccess"
+                  @error="handleUploadError"
+                  :file-list="fileList"
+                  :drag="false"
+                >
+                  <div class="upload-area">
+                    <div class="upload-icon">
+                      <el-icon class="upload-icon-small"><Upload /></el-icon>
+                    </div>
+                    <div class="upload-text">
+                      <h4>点击选择文件</h4>
+                      <p>支持jpg/png/mp3/mp4文件，不超过20MB</p>
+                    </div>
+                  </div>
+                </el-upload>
+              </div>
             </el-form-item>
           </el-col>
         </el-row>
@@ -132,14 +142,12 @@
       <el-table 
         :data="filteredResources" 
         border 
-        stripe
         style="width: 100%"
         empty-text="暂无资源数据，请先上传"
-        :header-cell-style="{ background: '#f7fafc', fontWeight: '600' }"
       >
-        <el-table-column prop="call_index" label="资源名称" width="200" align="center"></el-table-column>
-        <el-table-column prop="zhaiyao" label="资源描述" width="350" align="center"></el-table-column>
-        <el-table-column prop="category" label="资源分类" width="120" align="center">
+        <el-table-column prop="call_index" label="资源名称" width="150"></el-table-column>
+        <el-table-column prop="zhaiyao" label="资源描述" min-width="200"></el-table-column>
+        <el-table-column prop="category" label="资源分类" width="100">
           <template #default="scope">
             <el-tag 
               :type="scope.row.category === '减压' ? 'primary' : scope.row.category === '音乐' ? 'success' : 'warning'"
@@ -149,17 +157,17 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="资源预览" width="120" align="center">
+        <el-table-column label="资源预览" width="100">
           <template #default="scope">
             <el-image 
               :src="scope.row.img_url" 
               fit="cover" 
-              style="width: 90px; height: 60px; border-radius: 6px; cursor: pointer;"
+              style="width: 80px; height: 50px; border-radius: 4px; cursor: pointer;"
               :preview-src-list="[scope.row.img_url]"
             ></el-image>
           </template>
         </el-table-column>
-        <el-table-column label="资源路径" width="300" align="center">
+        <el-table-column label="资源路径" min-width="200">
           <template #default="scope">
             <a 
               :href="scope.row.img_url" 
@@ -170,13 +178,12 @@
             </a>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" align="center">
+        <el-table-column label="操作" width="120" fixed="right">
           <template #default="scope">
             <el-button 
-              type="danger" 
+              type="primary" 
               size="small" 
               @click="deleteResource(scope.row.id)"
-              icon="Delete"
             >
               删除
             </el-button>
@@ -192,6 +199,7 @@ import axios from 'axios'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElCard, ElDivider, ElUpload, ElButton, ElTable, ElTableColumn, ElMessage, ElImage, ElDialog, ElForm, ElFormItem, ElInput, ElSelect, ElOption } from 'element-plus'
+import { Search, Document, Grid, Upload, Plus, Refresh, Picture, Check } from '@element-plus/icons-vue'
 
 // 响应式变量
 const tableData = ref([])  
@@ -536,30 +544,170 @@ const deleteResource = async (id) => {
   box-shadow: 0 4px 16px rgba(107, 70, 193, 0.3);
 }
 
-/* 上传组件 */
+/* 上传容器 */
+.upload-container {
+  margin-top: 20px;
+}
+
+/* 上传区域 */
+.upload-form :deep(.el-upload) {
+  width: 100%;
+}
+
+.upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
+  border: 2px dashed rgba(90, 165, 222, 0.3);
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(247, 250, 252, 0.8) 0%, rgba(237, 242, 247, 0.8) 100%);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  min-height: 120px;
+}
+
+.upload-area:hover {
+  border-color: rgba(90, 165, 222, 0.7);
+  background: linear-gradient(135deg, rgba(247, 250, 252, 1) 0%, rgba(237, 242, 247, 1) 100%);
+  box-shadow: 0 4px 16px rgba(90, 165, 222, 0.2);
+  transform: translateY(-1px);
+}
+
+/* 上传图标 */
+.upload-icon {
+  margin-bottom: 10px;
+  animation: pulse 2s infinite;
+}
+
+.upload-icon-small {
+  font-size: 24px;
+  color: rgba(90, 165, 222, 0.7);
+  transition: all 0.3s ease;
+}
+
+.upload-area:hover .upload-icon-small {
+  color: rgba(90, 165, 222, 1);
+  transform: scale(1.1);
+}
+
+/* 上传文本 */
+.upload-text {
+  text-align: center;
+}
+
+.upload-text h4 {
+  margin: 0 0 5px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #4a5568;
+  transition: all 0.3s ease;
+}
+
+.upload-text p {
+  margin: 0;
+  font-size: 12px;
+  color: #718096;
+  transition: all 0.3s ease;
+}
+
+.upload-area:hover .upload-text h4 {
+  color: #2d3748;
+}
+
+.upload-area:hover .upload-text p {
+  color: #4a5568;
+}
+
+/* 上传提示 */
 .upload-form :deep(.el-upload__tip) {
   color: #8bc0e8;
   font-size: 13px;
+  text-align: center;
+  margin-top: 15px;
+  font-weight: 500;
+}
+
+/* 已上传文件列表 */
+.upload-form :deep(.el-upload-list) {
+  margin-top: 15px;
+}
+
+.upload-form :deep(.el-upload-list__item) {
+  border-radius: 8px;
+  border: 1px solid rgba(90, 165, 222, 0.3);
+  transition: all 0.3s ease;
+}
+
+.upload-form :deep(.el-upload-list__item:hover) {
+  border-color: rgba(90, 165, 222, 0.7);
+  box-shadow: 0 4px 12px rgba(90, 165, 222, 0.2);
+}
+
+.upload-form :deep(.el-upload-list__item-name) {
+  font-size: 14px;
+  color: #4a5568;
+  font-weight: 500;
+}
+
+.upload-form :deep(.el-upload-list__item-status-label) {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.upload-form :deep(.el-upload-list__item-actions) {
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.upload-form :deep(.el-upload-list__item:hover .el-upload-list__item-actions) {
+  opacity: 1;
+}
+
+/* 动画效果 */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* 文件类型图标 */
+.upload-form :deep(.el-upload-list__item-icon) {
+  font-size: 24px;
+  color: rgba(90, 165, 222, 0.7);
+}
+
+.upload-form :deep(.el-upload-list__item-icon.el-icon-picture) {
+  color: #38a169;
+}
+
+.upload-form :deep(.el-upload-list__item-icon.el-icon-music) {
+  color: #805ad5;
+}
+
+.upload-form :deep(.el-upload-list__item-icon.el-icon-video-camera) {
+  color: #dd6b20;
 }
 
 /* 表格样式 */
 .table-card :deep(.el-table) {
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
 }
 
-.table-card :deep(.el-table__header-wrapper) {
-  background: rgba(90, 165, 222, 0.7);
-  box-shadow: 0 4px 15px rgba(66, 165, 245, 0.3);
-}
-
 .table-card :deep(.el-table__header-wrapper th) {
-  background: transparent;
-  color: #8bc0e8;
+  background: #f7fafc;
   font-weight: 600;
   font-size: 14px;
-  text-align: center;
-  padding: 16px;
+  text-align: left;
+  padding: 12px;
 }
 
 .table-card :deep(.el-table__body-wrapper tr) {
@@ -571,8 +719,8 @@ const deleteResource = async (id) => {
 }
 
 .table-card :deep(.el-table__body-wrapper td) {
-  padding: 16px;
-  text-align: center;
+  padding: 12px;
+  text-align: left;
   color: #4a5568;
   font-size: 14px;
 }

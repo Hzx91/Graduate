@@ -1,7 +1,7 @@
 <template>
   <div class="login-container">
     <el-card class="login-card">
-      <h2 class="login-title">管理端登录</h2>
+      <h2 class="login-title">快乐心球站</h2>
       <el-form :model="loginForm" label-width="80px" class="login-form">
         <el-form-item label="账号">
           <el-input v-model="loginForm.username" placeholder="请输入账号"></el-input>
@@ -56,7 +56,7 @@ const login = () => {
       rgba(135, 206, 235, 0.5) 50%,  /* 半透明中冰蓝 */
       rgba(96, 168, 230, 0.5) 100%   /* 半透明深冰蓝 */
     ),
-    url('../assets/bz4.png');
+    url('../assets/bz.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -77,7 +77,7 @@ const login = () => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.2) 0%, transparent 50%);
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.253) 0%, transparent 50%);
   pointer-events: none;
 }
 
@@ -91,6 +91,7 @@ const login = () => {
   height: 200%;
   background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
   background-size: 50px 50px;
+  /* backdrop-filter: blur(0.1px);  */
   animation: float 20s linear infinite;
 }
 
@@ -109,9 +110,9 @@ const login = () => {
   padding: 40px;
   border-radius: 20px;
   background: rgba(242, 239, 239, 0.084);
-  backdrop-filter: blur(12px); /* 增强毛玻璃通透感 */
+  backdrop-filter: blur(-12px); /* 增强毛玻璃通透感 */
   border: 1px solid rgba(255, 255, 255, 0.3); /* 加一层细微白边，让框体更清晰 */
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); /* 加一点柔和阴影，让框体浮起来 */
+  box-shadow: 0 20px 15px rgba(0, 0, 0, 0.381); /* 加一点柔和阴影，让框体浮起来 */
   z-index: 1;
   transition: all 0.3s ease;
   transform: translateY(0);
@@ -119,7 +120,7 @@ const login = () => {
 
 .login-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 40px 40px rgba(0, 0, 0, 0.29);
 }
 
 /* 登录标题 */
@@ -128,7 +129,7 @@ const login = () => {
   margin-bottom: 30px;
   font-size: 28px; /* 稍放大字号 */
   font-weight: 600; /* 加粗字重 */
-  color: #409EFF; /* 用主题蓝，更醒目 */
+  color: rgba(55, 159, 250, 0.815); /* 用主题蓝，更醒目 */
   position: relative;
   padding-bottom: 15px;
 }
@@ -141,7 +142,7 @@ const login = () => {
   transform: translateX(-50%);
   width: 60px;
   height: 2px;
-  background: linear-gradient(90deg, #409EFF, #83bafc); /* 改成渐变线 */
+  background: #83bafc; /* 改成渐变线 */
   border-radius: 2px;
 }
 
@@ -211,15 +212,18 @@ const login = () => {
   border-radius: 8px;
   font-size: 16px;
   font-weight: 500;
-  background: #409EFF;
+  background:   
+		  rgba(55, 159, 250, 0.815);
+  box-shadow: 2px 0 20px rgba(142, 126, 165, 0.2);
   border: none;
   transition: all 0.3s ease; /* 加过渡动画 */
-  box-shadow: 0 4px 15px rgba(64, 158, 255, 0.3);
   margin-top: 10px;
 }
 
 .login-btn:hover {
-  background: #337ecc; /* hover 时颜色稍深 */
+  background:   
+		  rgb(44, 147, 237)   /* 深冰蓝 */
+		;
   transform: translateY(-1px); /* 微微上浮，增强按压感 */
   box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3); /* 加发光阴影 */
 }

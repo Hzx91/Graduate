@@ -158,52 +158,37 @@ const getMoodType = (mood) => {
   return moodTypeMap[mood] || 'default'
 }
 
-// 加载日记列表
+// 加载日记列表（已修复搜索）
 const loadDiaryList = () => {
-  // 构建查询参数
-  let params = {
-    pageindex: currentPage.value,
-    pagesize: pageSize.value
-  }
-  
-  if (searchKeyword.value) {
-    params.keyword = searchKeyword.value
-  }
-  
-  if (dateRange.value && dateRange.value.length === 2) {
-    // 日期筛选逻辑可以在后端实现，这里暂时不传递
-    // 实际项目中可以根据后端API设计调整
-  }
-  
-  // 发送API请求
-  fetch(`http://localhost:8082/api/mood-diary/list`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  })
-  .then(response => response.json())
+  // 拼接参数
+  const keyword = searchKeyword.value || ''
+  const page = currentPage.value
+  const size = pageSize.value
+
+  // ✅ 关键：把搜索词拼到 URL 里传给后端
+  const url = `http://localhost:8082/api/mood-diary/list?keyword=${encodeURIComponent(keyword)}&pageindex=${page}&pagesize=${size}`
+
+  fetch(url)
+  .then(res => res.json())
   .then(data => {
     if (data.status === 0) {
-      // 处理数据，将user_id和user_name映射到userId和userName
       diaryList.value = data.list.map(item => ({
         id: item.id,
         userId: item.user_id,
         userName: item.user_name,
         date: item.date,
-        mood: item.img.split('/').pop().replace('.png', '').replace('.jpg', ''),
+        mood: item.mood, // 直接用后端的情绪字段
         text: item.text,
-        images: item.images
+        images: item.images ? JSON.parse(item.images) : []
       }))
       total.value = data.total
     } else {
-      console.error('获取日记列表失败:', data.message)
-      ElMessage.error('获取日记列表失败')
+      ElMessage.error('获取失败')
     }
   })
-  .catch(error => {
-    console.error('网络错误:', error)
-    ElMessage.error('网络错误，请稍后重试')
+  .catch(err => {
+    console.error(err)
+    ElMessage.error('网络异常')
   })
 }
 
@@ -238,32 +223,26 @@ const viewDiaryDetail = (diary) => {
   dialogVisible.value = true
 }
 
-// 删除日记
+// 删除日记（真实删除）
 const deleteDiary = (diaryId) => {
-  ElMessageBox.confirm(
-    '确定要删除这篇日记吗？此操作不可恢复。',
-    '删除日记',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'danger'
-    }
-  )
-    .then(() => {
-      try {
-        // 模拟删除成功，因为后端API可能存在CORS问题
-        ElMessage.success('日记删除成功')
-        // 从本地列表中移除日记
-        diaryList.value = diaryList.value.filter(diary => diary.id !== diaryId)
-        total.value--
-      } catch (error) {
-        console.error('删除日记出错：', error)
-        ElMessage.error('日记删除失败，请稍后重试')
+  ElMessageBox.confirm('确定删除？', '警告', {
+    type: 'danger'
+  }).then(() => {
+    fetch(`http://localhost:8082/api/mood-diary/delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: diaryId })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 0) {
+        ElMessage.success('删除成功')
+        loadDiaryList() // 刷新列表
+      } else {
+        ElMessage.error('删除失败')
       }
     })
-    .catch(() => {
-      // 取消操作
-    })
+  }).catch(() => {})
 }
 
 // 页面加载时初始化数据
@@ -341,12 +320,12 @@ onMounted(() => {
 }
 
 .mood-diary-manage :deep(.el-input__wrapper:hover) {
-  border-color: #6b46c1;
+   border-color:rgba(90, 165, 222, 0.7);
   box-shadow: 0 4px 12px rgba(107, 70, 193, 0.2);
 }
 
 .mood-diary-manage :deep(.el-input__wrapper.is-focus) {
-  border-color: #6b46c1;
+   border-color:rgba(90, 165, 222, 0.7);
   box-shadow: 0 4px 16px rgba(107, 70, 193, 0.3);
 }
 

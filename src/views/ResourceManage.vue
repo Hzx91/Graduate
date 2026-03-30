@@ -88,7 +88,6 @@
                 :prefix-icon="Grid"
               >
                 <el-option label="减压" value="减压"></el-option>
-                <el-option label="音乐" value="音乐"></el-option>
                 <el-option label="白噪音" value="白噪音"></el-option>
                 <el-option label="其他" value="其他"></el-option>
               </el-select>

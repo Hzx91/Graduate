@@ -121,28 +121,35 @@ const ws = ref(null)
 const wsConnected = ref(false)
 
 // 获取用户列表
+// 获取用户列表
 const getUserList = () => {
   loading.value = true
-  // 调用API获取用户列表
-  fetch(`http://localhost:8082/api/admin/users?keyword=${encodeURIComponent(searchText.value)}&pageindex=${currentPage.value}&pagesize=${pageSize.value}`)
+  // 打印要传的搜索值，排查有没有拿到
+  console.log('当前搜索关键词：', searchText.value)
+  
+  // 先用你原来后端接收的 keyword，很多后端是 keyword
+  let url = `http://localhost:8082/api/admin/users?keyword=${encodeURIComponent(searchText.value)}&pageindex=${currentPage.value}&pagesize=${pageSize.value}`
+  console.log('请求地址：', url)
+
+  fetch(url)
     .then(res => res.json())
     .then(data => {
+      console.log('后端返回结果：', data) // 关键日志
       if (data.status === 0) {
-        users.value = data.list
-        totalUsers.value = data.total
+        users.value = data.list || []
+        totalUsers.value = data.total || 0
       } else {
-        ElMessage.error('获取用户列表失败：' + data.message)
+        ElMessage.error('获取用户列表失败：' + (data.message || ''))
       }
     })
     .catch(err => {
-      console.error('获取用户列表出错：', err)
+      console.error('请求报错：', err)
       ElMessage.error('获取用户列表失败，请稍后重试')
     })
     .finally(() => {
       loading.value = false
     })
 }
-
 // 搜索用户
 const searchUser = () => {
   currentPage.value = 1
@@ -207,7 +214,7 @@ const resetUserPassword = (userId, username) => {
     })
 }
 
-// 删除用户
+// 删除用户（真正删除数据库）
 const deleteUser = (userId, username) => {
   ElMessageBox.confirm(
     `确定要删除用户「${username}」吗？此操作不可恢复。`,
@@ -218,21 +225,26 @@ const deleteUser = (userId, username) => {
       type: 'danger'
     }
   )
-    .then(() => {
-      try {
-        // 模拟删除成功，因为后端API可能存在CORS问题
+  .then(() => {
+    // 调用真正删除接口
+    fetch(`http://localhost:8082/api/admin/user/${userId}/delete`, {
+      method: 'DELETE'
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 0) {
         ElMessage.success('用户删除成功')
-        // 从本地列表中移除用户
-        users.value = users.value.filter(user => user.id !== userId)
-        totalUsers.value--
-      } catch (err) {
-        console.error('删除用户出错：', err)
-        ElMessage.error('用户删除失败，请稍后重试')
+        getUserList() // 刷新列表
+      } else {
+        ElMessage.error('删除失败：' + data.message)
       }
     })
-    .catch(() => {
-      // 取消操作
+    .catch(err => {
+      console.error(err)
+      ElMessage.error('删除失败')
     })
+  })
+  .catch(() => {})
 }
 
 // 格式化日期时间
@@ -435,12 +447,12 @@ onUnmounted(() => {
 }
 
 .user-manage :deep(.el-input__wrapper:hover) {
-  border-color: #6b46c1;
+   border-color:rgba(90, 165, 222, 0.7);
   box-shadow: 0 4px 12px rgba(107, 70, 193, 0.2);
 }
 
 .user-manage :deep(.el-input__wrapper.is-focus) {
-  border-color: #6b46c1;
+   border-color:rgba(90, 165, 222, 0.7);
   box-shadow: 0 4px 16px rgba(107, 70, 193, 0.3);
 }
 

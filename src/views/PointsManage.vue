@@ -185,12 +185,12 @@ onMounted(() => {
 }
 
 .points-manage :deep(.el-input__wrapper:hover) {
-  border-color: #6b46c1;
+   border-color:rgba(90, 165, 222, 0.7);
   box-shadow: 0 4px 12px rgba(107, 70, 193, 0.2);
 }
 
 .points-manage :deep(.el-input__wrapper.is-focus) {
-  border-color: #6b46c1;
+   border-color:rgba(90, 165, 222, 0.7);
   box-shadow: 0 4px 16px rgba(107, 70, 193, 0.3);
 }
 

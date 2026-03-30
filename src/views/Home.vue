@@ -210,7 +210,6 @@ onUnmounted(() => {
         break
       case '2':
         router.push('/home/mood-diary-manage') // 情绪日记管理页
-        
         break
       case '3':
         router.push('/home/resource-manage') // 资源管理页

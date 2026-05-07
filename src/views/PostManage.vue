@@ -18,7 +18,12 @@
             <span>{{ scope.row.content || '无内容' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="user_name" label="昵称" width="150"></el-table-column>
+        <el-table-column prop="user_name" label="昵称" width="150">
+          <template #default="scope">
+            <span v-if="scope.row.is_anonymous" class="anonymous-tag">🔒 匿名用户</span>
+            <span v-else>{{ scope.row.user_name }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="like_count" label="点赞数" width="100"></el-table-column>
         <el-table-column prop="comment_count" label="评论数" width="100"></el-table-column>
         <el-table-column prop="view_count" label="浏览量" width="100"></el-table-column>
@@ -75,7 +80,10 @@
         </div>
         <div class="detail-item">
           <span class="label">作者：</span>
-          <span class="value">{{ currentPost.user_name }}</span>
+          <span class="value">
+            <span v-if="currentPost.is_anonymous" class="anonymous-tag">🔒 匿名用户 (UID: {{ currentPost.user_id }})</span>
+            <span v-else>{{ currentPost.user_name }} (UID: {{ currentPost.user_id }})</span>
+          </span>
         </div>
         <div class="detail-item">
           <span class="label">发布时间：</span>
@@ -109,11 +117,18 @@
           <span class="label">内容：</span>
           <div class="value content">{{ currentPost.content }}</div>
         </div>
-        <div class="detail-item" v-if="currentPost.images && JSON.parse(currentPost.images).length">
+        <div class="detail-item">
+          <span class="label">匿名状态：</span>
+          <span class="value">
+            <el-tag v-if="currentPost.is_anonymous" type="warning">🔒 匿名帖子</el-tag>
+            <el-tag v-else type="info">🌟 公开帖子</el-tag>
+          </span>
+        </div>
+        <div class="detail-item" v-if="currentPost._formattedImages && currentPost._formattedImages.length">
           <span class="label">图片：</span>
           <div class="value images">
             <div 
-              v-for="(img, index) in JSON.parse(currentPost.images)" 
+              v-for="(img, index) in currentPost._formattedImages" 
               :key="index" 
               class="image-wrapper"
             >
@@ -122,7 +137,7 @@
                 fit="cover" 
                 style="width: 120px; height: 120px; margin: 5px;"
                 :error="handleImageError"
-                :preview-src-list="JSON.parse(currentPost.images)"
+                :preview-src-list="currentPost._formattedImages"
               >
                 <!-- 图片加载失败时显示的占位内容 -->
                 <template #error>
@@ -256,42 +271,47 @@ const viewDetail = (row) => {
   // 深拷贝行数据，避免修改原始数据
   const postData = JSON.parse(JSON.stringify(row));
   
-  // 确保图片URL格式正确
+  // 确保图片URL格式正确 - 后端返回的可能是数组或字符串
+  let formattedImages = [];
   if (postData.images) {
     try {
       let images = [];
       // 尝试解析图片数据
       if (typeof postData.images === 'string') {
         if (postData.images.startsWith('http')) {
-          // 单个图片URL
+          // 单个完整URL图片
           images = [postData.images];
-        } else {
+        } else if (postData.images.startsWith('[')) {
           // JSON字符串数组
           images = JSON.parse(postData.images);
+        } else {
+          // 单个相对路径
+          images = [postData.images];
         }
       } else if (Array.isArray(postData.images)) {
         // 已经是数组
         images = postData.images;
       }
       
-      // 格式化图片URL
-      const formattedImages = images.map(img => {
-        if (img && typeof img === 'string' && !img.startsWith('http')) {
-          return `http://localhost:8082${img}`;
+      // 格式化图片URL，添加服务器前缀
+      formattedImages = images.map(img => {
+        if (img && typeof img === 'string') {
+          if (img.startsWith('http') || img.startsWith('data:')) {
+            return img;
+          }
+          // 添加服务器前缀
+          return `http://localhost:8082${img.startsWith('/') ? '' : '/'}${img}`;
         }
-        return img;
-      }).filter(img => img); // 过滤空值
+        return null;
+      }).filter(img => img && !img.includes('null')); // 过滤空值
       
-      postData.images = JSON.stringify(formattedImages);
     } catch (e) {
       console.error('解析图片失败:', e);
-      // 设置默认空数组，避免后续处理出错
-      postData.images = '[]';
     }
-  } else {
-    // 如果没有图片，设置默认空数组
-    postData.images = '[]';
   }
+  
+  postData._formattedImages = formattedImages;
+  postData.images = JSON.stringify(formattedImages); // 保持兼容性
   
   currentPost.value = postData;
   dialogVisible.value = true;
@@ -864,6 +884,19 @@ onMounted(() => {
     min-width: auto;
     padding-top: 0;
   }
+}
+
+/* 匿名标签样式 */
+.anonymous-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+  color: #7b1fa2;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 @media (max-width: 768px) {

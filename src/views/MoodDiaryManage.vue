@@ -42,7 +42,13 @@
         <el-table-column prop="date" label="记录日期" width="180" />
         <el-table-column prop="mood" label="情绪" width="100">
           <template #default="scope">
-            <el-tag :type="getMoodType(scope.row.mood)">{{ scope.row.mood }}</el-tag>
+            <image 
+              v-if="scope.row.moodImg" 
+              :src="'http://localhost:8082' + scope.row.moodImg" 
+              style="width: 40px; height: 40px; border-radius: 50%;"
+              @error="(e) => e.target.style.display = 'none'"
+            />
+            <el-tag v-else type="default">无</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="text" label="日记内容" min-width="300">
@@ -50,11 +56,18 @@
             <span class="text-content">{{ scope.row.text || '无内容' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="images" label="图片" width="120">
+        <el-table-column prop="images" label="图片" width="150">
           <template #default="scope">
-            <el-tag v-if="scope.row.images && scope.row.images.length > 0" type="info">
-              {{ scope.row.images.length }} 张
-            </el-tag>
+            <view v-if="scope.row.images && scope.row.images.length > 0" class="image-preview-cell">
+              <image 
+                v-for="(img, idx) in scope.row.images.slice(0, 3)" 
+                :key="idx"
+                :src="'http://localhost:8082' + img" 
+                class="thumb-img"
+                @error="(e) => e.target.style.display = 'none'"
+              />
+              <text v-if="scope.row.images.length > 3" class="more-text">+{{ scope.row.images.length - 3 }}</text>
+            </view>
             <el-tag v-else type="default">无</el-tag>
           </template>
         </el-table-column>
@@ -169,26 +182,66 @@ const loadDiaryList = () => {
   const url = `http://localhost:8082/api/mood-diary/list?keyword=${encodeURIComponent(keyword)}&pageindex=${page}&pagesize=${size}`
 
   fetch(url)
-  .then(res => res.json())
-  .then(data => {
+  .then(res => {
+    if (!res.ok) {
+      throw new Error(`HTTP错误: ${res.status}`);
+    }
+    return res.text(); // 先获取文本
+  })
+  .then(text => {
+    if (!text || text.trim() === '') {
+      throw new Error('后端返回空数据，请检查后端服务是否启动');
+    }
+    const data = JSON.parse(text);
     if (data.status === 0) {
-      diaryList.value = data.list.map(item => ({
-        id: item.id,
-        userId: item.user_id,
-        userName: item.user_name,
-        date: item.date,
-        mood: item.mood, // 直接用后端的情绪字段
-        text: item.text,
-        images: item.images ? JSON.parse(item.images) : []
-      }))
+      // 情绪图片名称 -> 中文标签
+      const imgToMoodLabel = (img) => {
+        if (!img) return '未知';
+        if (img.includes('mood1') || img.includes('happy') || img.includes('开心')) return '非常开心';
+        if (img.includes('mood2') || img.includes('good') || img.includes('愉快')) return '感到愉快';
+        if (img.includes('mood3') || img.includes('不错')) return '心情不错';
+        if (img.includes('mood4') || img.includes('peace') || img.includes('平静')) return '感觉平静';
+        if (img.includes('mood5') || img.includes('emo')) return '有些emo';
+        if (img.includes('mood6') || img.includes('难过')) return '有点难过';
+        if (img.includes('mood7')) return '非常难过';
+        if (img.includes('mood8') || img.includes('angry') || img.includes('愤怒')) return '感到愤怒';
+        if (img.includes('mood9') || img.includes('疲惫')) return '感到疲惫';
+        return '感觉平静';
+      };
+      
+      diaryList.value = data.list.map(item => {
+        // 处理images字段
+        let images = [];
+        if (item.images) {
+          if (Array.isArray(item.images)) {
+            images = item.images;
+          } else {
+            try {
+              images = JSON.parse(item.images);
+            } catch (e) {
+              images = [];
+            }
+          }
+        }
+        return {
+          id: item.id,
+          userId: item.user_id,
+          userName: item.user_name,
+          date: item.date,
+          mood: imgToMoodLabel(item.img), // 从 img 转换为中文情绪
+          moodImg: item.img, // 保留原始图片名
+          text: item.text,
+          images: images
+        };
+      })
       total.value = data.total
     } else {
-      ElMessage.error('获取失败')
+      ElMessage.error(data.message || '获取失败')
     }
   })
   .catch(err => {
-    console.error(err)
-    ElMessage.error('网络异常')
+    console.error('加载日记列表失败:', err)
+    ElMessage.error('网络异常: ' + err.message + '，请检查后端服务是否启动')
   })
 }
 
@@ -441,5 +494,24 @@ onMounted(() => {
   .el-table td {
     padding: 8px;
   }
+}
+
+/* 图片预览单元格 */
+.image-preview-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.thumb-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.more-text {
+  font-size: 12px;
+  color: #999;
 }
 </style>

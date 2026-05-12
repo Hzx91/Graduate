@@ -76,9 +76,7 @@
             <el-button type="primary" size="small" @click="viewDiaryDetail(scope.row)">
               查看详情
             </el-button>
-            <el-button type="danger" size="small" @click="deleteDiary(scope.row.id)">
-              删除日记
-            </el-button>
+            
           </template>
         </el-table-column>
       </el-table>
@@ -276,27 +274,7 @@ const viewDiaryDetail = (diary) => {
   dialogVisible.value = true
 }
 
-// 删除日记（真实删除）
-const deleteDiary = (diaryId) => {
-  ElMessageBox.confirm('确定删除？', '警告', {
-    type: 'danger'
-  }).then(() => {
-    fetch(`http://localhost:8082/api/mood-diary/delete`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: diaryId })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.status === 0) {
-        ElMessage.success('删除成功')
-        loadDiaryList() // 刷新列表
-      } else {
-        ElMessage.error('删除失败')
-      }
-    })
-  }).catch(() => {})
-}
+
 
 // 页面加载时初始化数据
 onMounted(() => {

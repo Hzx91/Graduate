@@ -104,7 +104,7 @@
                   class="upload-demo"
                   action="http://localhost:8082/api/admin/uploadResource"
                   name="resourceFile"
-                  accept=".jpg,.png,.mp3,.mp4"
+                  :accept="uploadAccept"
                   :limit="1"
                   :data="{ name: resourceName, desc: resourceDesc, category: resourceCategory }"
                   @success="handleUploadSuccess"
@@ -118,7 +118,7 @@
                     </div>
                     <div class="upload-text">
                       <h4>点击选择文件</h4>
-                      <p>支持jpg/png/mp3/mp4文件，不超过20MB</p>
+                      <p>{{ uploadTips }}</p>
                     </div>
                   </div>
                 </el-upload>
@@ -138,12 +138,38 @@
         </div>
       </template>
       
+      <!-- 批量操作工具栏 -->
+      <div class="batch-actions" v-if="filteredResources.length > 0">
+        <div class="batch-left">
+          <el-checkbox 
+            v-model="selectAll" 
+            @change="handleSelectAll"
+            :indeterminate="isIndeterminate"
+          >全选</el-checkbox>
+          <span class="selected-count" v-if="selectedResources.length > 0">
+            已选择 {{ selectedResources.length }} 项
+          </span>
+        </div>
+        <div class="batch-right">
+          <el-button 
+            type="danger" 
+            :disabled="selectedResources.length === 0"
+            @click="batchDelete"
+            class="batch-btn"
+          >
+            批量删除
+          </el-button>
+        </div>
+      </div>
+      
       <el-table 
         :data="filteredResources" 
         border 
-        style="width: 100%"
+        style="width: 100%; margin-top: 15px;"
+        @selection-change="handleSelectionChange"
         empty-text="暂无资源数据，请先上传"
       >
+        <el-table-column type="selection" width="50"></el-table-column>
         <el-table-column prop="call_index" label="资源名称" width="150"></el-table-column>
         <el-table-column prop="zhaiyao" label="资源描述" min-width="200"></el-table-column>
         <el-table-column prop="category" label="资源分类" width="100">
@@ -156,12 +182,21 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="资源预览" width="100">
+        <el-table-column label="资源预览" width="120">
           <template #default="scope">
+            <div v-if="isVideo(scope.row.img_url)" class="video-preview">
+              <video 
+                :src="scope.row.img_url" 
+                controls 
+                style="width: 100px; height: 60px; border-radius: 4px;"
+                poster="/images/video-placeholder.png"
+              ></video>
+            </div>
             <el-image 
+              v-else
               :src="scope.row.img_url" 
               fit="cover" 
-              style="width: 80px; height: 50px; border-radius: 4px; cursor: pointer;"
+              style="width: 100px; height: 60px; border-radius: 4px; cursor: pointer;"
               :preview-src-list="[scope.row.img_url]"
             ></el-image>
           </template>
@@ -177,10 +212,18 @@
             </a>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
+        <el-table-column label="操作" width="180" fixed="right">
           <template #default="scope">
             <el-button 
               type="primary" 
+              size="small" 
+              @click="editResource(scope.row)"
+            >
+              <el-icon><Edit /></el-icon>
+              编辑
+            </el-button>
+            <el-button 
+              type="danger" 
               size="small" 
               @click="deleteResource(scope.row.id)"
             >
@@ -190,6 +233,85 @@
         </el-table-column>
       </el-table>
     </el-card>
+    
+    <!-- 编辑资源弹窗 -->
+    <el-dialog
+      v-model="editDialogVisible"
+      title="编辑资源"
+      width="600px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="editForm" label-width="100px" class="edit-form">
+        <el-form-item label="资源名称">
+          <el-input v-model="editForm.name" placeholder="请输入资源名称"></el-input>
+        </el-form-item>
+        <el-form-item label="资源描述">
+          <el-input 
+            v-model="editForm.desc" 
+            type="textarea"
+            :rows="3"
+            placeholder="请输入资源描述"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="资源分类">
+          <el-select v-model="editForm.category" placeholder="选择资源分类" style="width: 100%;">
+            <el-option label="减压" value="减压"></el-option>
+            <el-option label="白噪音" value="白噪音"></el-option>
+            <el-option label="其他" value="其他"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="资源预览">
+          <div v-if="editForm.img_url && isVideo(editForm.img_url)" class="video-preview">
+            <video 
+              :src="editForm.img_url" 
+              controls 
+              style="width: 120px; height: 80px; border-radius: 8px;"
+              poster="/images/video-placeholder.png"
+            ></video>
+          </div>
+          <el-image 
+            v-else-if="editForm.img_url"
+            :src="editForm.img_url" 
+            fit="cover" 
+            style="width: 120px; height: 80px; border-radius: 8px;"
+            :preview-src-list="[editForm.img_url]"
+          ></el-image>
+          <span v-else class="no-preview">暂无预览图</span>
+        </el-form-item>
+        <el-form-item label="替换资源文件">
+          <div class="upload-container">
+            <el-upload
+              class="upload-demo"
+              action="http://localhost:8082/api/admin/updateResource"
+              name="resourceFile"
+              :accept="getEditAccept()"
+              :limit="1"
+              :data="{ id: editForm.id, name: editForm.name, desc: editForm.desc, category: editForm.category }"
+              @success="handleEditUploadSuccess"
+              @error="handleEditUploadError"
+              :file-list="editFileList"
+              :drag="false"
+            >
+              <div class="upload-area">
+                <div class="upload-icon">
+                  <el-icon class="upload-icon-small"><Upload /></el-icon>
+                </div>
+                <div class="upload-text">
+                  <h4>点击选择文件</h4>
+                  <p>{{ getEditTips() }}</p>
+                </div>
+              </div>
+            </el-upload>
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="cancelEdit">取消</el-button>
+          <el-button type="primary" @click="saveEditWithoutFile">保存文字修改</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -198,7 +320,8 @@ import axios from 'axios'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElCard, ElDivider, ElUpload, ElButton, ElTable, ElTableColumn, ElMessage, ElImage, ElDialog, ElForm, ElFormItem, ElInput, ElSelect, ElOption } from 'element-plus'
-import { Search, Document, Grid, Upload, Plus, Refresh, Picture, Check } from '@element-plus/icons-vue'
+import { Search, Document, Grid, Upload, Plus, Refresh, Picture, Check, Edit } from '@element-plus/icons-vue'
+import { ElMessageBox } from 'element-plus'
 
 // 响应式变量
 const tableData = ref([])  
@@ -208,8 +331,84 @@ const resourceDesc = ref('')
 const resourceCategory = ref('减压') // 默认分类为减压
 const resourceTags = ref('') // 适用场景
 const fileList = ref([]) // 上传文件列表
+
+// 根据分类动态生成上传接受类型
+const uploadAccept = computed(() => {
+  switch (resourceCategory.value) {
+    case '白噪音':
+      return '.mp3,.wav,.ogg,.flac,.aac,.wma'
+    case '减压':
+      return '.jpg,.png'
+    case '其他':
+    default:
+      return '.jpg,.png,.mp4,.webm,.avi,.mov'
+  }
+})
+
+// 根据分类动态生成上传提示
+const uploadTips = computed(() => {
+  switch (resourceCategory.value) {
+    case '白噪音':
+      return '支持mp3/wav/ogg/flac/aac/wma音频文件，不超过20MB'
+    case '减压':
+      return '支持jpg/png图片文件，不超过20MB'
+    case '其他':
+    default:
+      return '支持jpg/png图片和mp4/webm/avi/mov视频文件，不超过50MB'
+  }
+})
+
+// 判断是否是视频文件
+const isVideo = (url) => {
+  if (!url) return false
+  const videoExtensions = ['.mp4', '.webm', '.avi', '.mov', '.mkv', '.flv', '.wmv']
+  const lowerUrl = url.toLowerCase()
+  return videoExtensions.some(ext => lowerUrl.includes(ext))
+}
+
+// 编辑时获取文件上传接受类型
+const getEditAccept = () => {
+  switch (editForm.value.category) {
+    case '白噪音':
+      return '.mp3,.wav,.ogg,.flac,.aac,.wma'
+    case '减压':
+      return '.jpg,.png'
+    case '其他':
+    default:
+      return '.jpg,.png,.mp4,.webm,.avi,.mov'
+  }
+}
+
+// 编辑时获取文件上传提示
+const getEditTips = () => {
+  switch (editForm.value.category) {
+    case '白噪音':
+      return '支持mp3/wav/ogg/flac/aac/wma音频文件'
+    case '减压':
+      return '支持jpg/png图片文件'
+    case '其他':
+    default:
+      return '支持jpg/png图片和mp4/webm/avi/mov视频文件'
+  }
+}
 const searchText = ref('') // 搜索关键字
 const route = useRoute() // 获取当前路由
+
+// 批量选择相关
+const selectedResources = ref([])
+const selectAll = ref(false)
+const isIndeterminate = ref(false)
+
+// 编辑资源相关
+const editDialogVisible = ref(false)
+const editForm = ref({
+  id: '',
+  name: '',
+  desc: '',
+  category: '',
+  img_url: ''
+})
+const editFileList = ref([]) // 编辑时的文件列表
 
 // 根据当前路由的category过滤资源
 const filteredResources = computed(() => {
@@ -327,6 +526,8 @@ const deleteResource = async (id) => {
       tableData.value = tableData.value.filter(item => item.id !== id)
       // 同步刷新列表
       await getResourceList()
+      // 更新选择状态
+      updateSelectionAfterDelete(id)
     } else {
       ElMessage.error('删除失败：' + res.data.message)
     }
@@ -334,6 +535,188 @@ const deleteResource = async (id) => {
     ElMessage.error('删除出错：' + err.message)
     console.log('删除错误：', err)
   }
+}
+
+// ==================== 批量操作相关函数 ====================
+
+// 处理选择变化
+const handleSelectionChange = (selection) => {
+  selectedResources.value = selection
+  // 更新全选状态
+  if (selection.length === 0) {
+    selectAll.value = false
+    isIndeterminate.value = false
+  } else if (selection.length === filteredResources.value.length) {
+    selectAll.value = true
+    isIndeterminate.value = false
+  } else {
+    selectAll.value = false
+    isIndeterminate.value = true
+  }
+}
+
+// 全选/取消全选
+const handleSelectAll = (checked) => {
+  if (checked) {
+    selectedResources.value = [...filteredResources.value]
+  } else {
+    selectedResources.value = []
+  }
+  isIndeterminate.value = false
+}
+
+// 批量删除
+const batchDelete = async () => {
+  if (selectedResources.value.length === 0) {
+    ElMessage.warning('请先选择要删除的资源')
+    return
+  }
+  
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedResources.value.length} 个资源吗？此操作不可恢复！`,
+      '批量删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    // 获取所有要删除的资源ID
+    const idsToDelete = selectedResources.value.map(item => item.id)
+    
+    // 使用循环单个删除（如果后端没有批量API）
+    const deletePromises = idsToDelete.map(id => 
+      axios.post('http://localhost:8082/api/admin/deleteResource', { id })
+    )
+    
+    const results = await Promise.all(deletePromises)
+    const successCount = results.filter(r => r.data.status === 0).length
+    
+    ElMessage.success(`成功删除 ${successCount} 个资源`)
+    
+    // 清空选择
+    clearSelection()
+    
+    // 刷新列表
+    await getResourceList()
+  } catch (err) {
+    if (err !== 'cancel') {
+      console.error('批量删除失败:', err)
+      ElMessage.error('批量删除失败')
+    }
+  }
+}
+
+// 更新删除后的选择状态
+const updateSelectionAfterDelete = (deletedId) => {
+  selectedResources.value = selectedResources.value.filter(item => item.id !== deletedId)
+  // 重新检查全选状态
+  if (selectedResources.value.length === 0) {
+    selectAll.value = false
+    isIndeterminate.value = false
+  } else if (selectedResources.value.length === filteredResources.value.length) {
+    selectAll.value = true
+    isIndeterminate.value = false
+  } else {
+    selectAll.value = false
+    isIndeterminate.value = true
+  }
+}
+
+// 清空选择状态
+const clearSelection = () => {
+  selectedResources.value = []
+  selectAll.value = false
+  isIndeterminate.value = false
+}
+
+// ==================== 编辑资源相关函数 ====================
+
+// 打开编辑弹窗
+const editResource = (row) => {
+  editForm.value = {
+    id: row.id,
+    name: row.call_index || '',
+    desc: row.zhaiyao || '',
+    category: row.category || '减压',
+    img_url: row.img_url || ''
+  }
+  editFileList.value = []
+  editDialogVisible.value = true
+}
+
+// 取消编辑
+const cancelEdit = () => {
+  editDialogVisible.value = false
+  editFileList.value = []
+}
+
+// 保存编辑（仅文字修改）
+const saveEditWithoutFile = async () => {
+  if (!editForm.value.name.trim()) {
+    ElMessage.warning('请输入资源名称')
+    return
+  }
+  
+  if (!editForm.value.desc.trim()) {
+    ElMessage.warning('请输入资源描述')
+    return
+  }
+  
+  try {
+    const res = await axios.post('http://localhost:8082/api/admin/updateResource', {
+      id: editForm.value.id,
+      name: editForm.value.name,
+      desc: editForm.value.desc,
+      category: editForm.value.category
+    })
+    
+    if (res.data.status === 0) {
+      ElMessage.success('编辑成功！')
+      editDialogVisible.value = false
+      editFileList.value = []
+      // 刷新列表
+      await getResourceList()
+    } else {
+      ElMessage.error('编辑失败：' + res.data.message)
+    }
+  } catch (err) {
+    console.error('编辑失败:', err)
+    ElMessage.error('编辑失败')
+  }
+}
+
+// 编辑上传成功回调
+const handleEditUploadSuccess = async (res) => {
+  try {
+    if (res.status === 0) {
+      ElMessage.success('资源文件替换成功！')
+      editDialogVisible.value = false
+      editFileList.value = []
+      // 刷新列表
+      await getResourceList()
+    } else {
+      ElMessage.error('替换失败：' + res.message)
+    }
+  } catch (err) {
+    ElMessage.error('替换回调出错：' + err.message)
+  }
+}
+
+// 编辑上传失败回调
+const handleEditUploadError = (err) => {
+  let errorMsg = '替换失败：'
+  if (err.message.includes('Unexpected field')) {
+    errorMsg += '文件字段名称不匹配（前端name需为resourceFile）'
+  } else if (err.message.includes('File too large')) {
+    errorMsg += '文件超过20MB，请压缩后上传'
+  } else {
+    errorMsg += err.message
+  }
+  ElMessage.error(errorMsg)
+  console.log('替换错误详情：', err)
 }
 </script>
 
@@ -410,7 +793,7 @@ const deleteResource = async (id) => {
 
 .search-container :deep(.el-input__wrapper.is-focus) {
   border-color: rgba(90, 165, 222, 0.7);
-  box-shadow: 0 4px 16px rgba(107, 70, 193, 0.3);
+  box-shadow: 0 4px 16px rgba(90, 165, 222, 0.4);
 }
 
 /* 按钮样式 */
@@ -534,13 +917,13 @@ const deleteResource = async (id) => {
 .upload-form :deep(.el-input__wrapper:hover),
 .upload-form :deep(.el-select__wrapper:hover) {
   border-color: rgba(90, 165, 222, 0.7);
-  box-shadow: 0 4px 16px rgba(107, 70, 193, 0.3);
+  box-shadow: 0 4px 16px rgba(90, 165, 222, 0.3);
 }
 
 .upload-form :deep(.el-input__wrapper.is-focus),
 .upload-form :deep(.el-select__wrapper.is-focus) {
   border-color: rgba(90, 165, 222, 0.7);
-  box-shadow: 0 4px 16px rgba(107, 70, 193, 0.3);
+  box-shadow: 0 4px 16px rgba(90, 165, 222, 0.4);
 }
 
 /* 上传容器 */
@@ -714,7 +1097,7 @@ const deleteResource = async (id) => {
 }
 
 .table-card :deep(.el-table__body-wrapper tr:hover) {
-  background: rgba(107, 70, 193, 0.05);
+  background: rgba(90, 165, 222, 0.05);
 }
 
 .table-card :deep(.el-table__body-wrapper td) {
@@ -865,5 +1248,235 @@ const deleteResource = async (id) => {
   .table-card :deep(.el-table__body-wrapper td) {
     padding: 12px 8px;
   }
+  
+  /* 移动端批量操作工具栏 */
+  .batch-actions {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 15px;
+  }
+  
+  .batch-left {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .batch-right {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .batch-btn {
+    flex: 1;
+    max-width: 200px;
+  }
+}
+
+/* 批量操作工具栏样式 */
+.batch-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: linear-gradient(180deg,
+		  rgba(173, 216, 255, 0.9) 0%,    /* 浅冰蓝 */
+		  rgba(135, 206, 235, 0.9) 50%,  /* 中冰蓝 */
+		  rgba(96, 168, 230, 0.9) 100%   /* 深冰蓝 */
+		);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.batch-actions:hover {
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.batch-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.batch-left :deep(.el-checkbox) {
+  color: #fff;
+  font-weight: 600;
+}
+
+.batch-left :deep(.el-checkbox__label) {
+  color: #fff !important;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.batch-left :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
+  background-color: #fff;
+  border-color: #fff;
+}
+
+.batch-left :deep(.el-checkbox__input.is-checked .el-checkbox__inner::after) {
+  border-color: #667eea;
+}
+
+.batch-left :deep(.el-checkbox__input.is-indeterminate .el-checkbox__inner) {
+  background-color: #fff;
+  border-color: #fff;
+}
+
+.batch-left :deep(.el-checkbox__input.is-indeterminate .el-checkbox__inner::before) {
+  background-color: #667eea;
+  border-color: #667eea;
+}
+
+.selected-count {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.batch-right {
+  display: flex;
+  gap: 10px;
+}
+
+.batch-btn {
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.batch-btn:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.batch-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.batch-right :deep(.el-button--danger) {
+  background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+  border: none;
+}
+
+.batch-right :deep(.el-button--danger):not(:disabled):hover {
+  background: linear-gradient(135deg, #e6395c 0%, #e64425 100%);
+}
+
+/* 编辑表单样式 */
+.edit-form :deep(.el-form-item) {
+  margin-bottom: 20px;
+}
+
+.edit-form :deep(.el-form-item__label) {
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.edit-form :deep(.el-input__wrapper),
+.edit-form :deep(.el-select__wrapper),
+.edit-form :deep(.el-textarea__inner) {
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.edit-form :deep(.el-input__wrapper:hover),
+.edit-form :deep(.el-select__wrapper:hover),
+.edit-form :deep(.el-textarea__inner:hover) {
+  border-color: rgba(90, 165, 222, 0.7);
+}
+
+.edit-form :deep(.el-input__wrapper.is-focus),
+.edit-form :deep(.el-select__wrapper.is-focus),
+.edit-form :deep(.el-textarea__inner:focus) {
+  border-color: rgba(90, 165, 222, 0.7);
+  box-shadow: 0 0 0 3px rgba(90, 165, 222, 0.1);
+}
+
+.no-preview {
+  color: #a0aec0;
+  font-size: 14px;
+}
+
+/* 编辑弹窗样式 */
+.resource-manage :deep(.el-dialog) {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+}
+
+.resource-manage :deep(.el-dialog__header) {
+  background: linear-gradient(180deg, rgba(173, 216, 255, 0.9) 0%, /* 浅冰蓝 */ rgba(135, 206, 235, 0.9) 50%, /* 中冰蓝 */ rgba(96, 168, 230, 0.9) 100% /* 深冰蓝 */);
+  color: #fff;
+  padding: 20px;
+}
+
+.resource-manage :deep(.el-dialog__title) {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.resource-manage :deep(.el-dialog__headerbtn) {
+  color: #fff;
+}
+
+.resource-manage :deep(.el-dialog__headerbtn:hover) {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.resource-manage :deep(.el-dialog__body) {
+  padding: 30px;
+  background: #fff;
+}
+
+.resource-manage :deep(.el-dialog__footer) {
+  background: #f7fafc;
+  padding: 20px 30px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.resource-manage :deep(.dialog-footer .el-button) {
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 8px 20px;
+}
+
+.resource-manage :deep(.dialog-footer .el-button:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.resource-manage :deep(.dialog-footer .el-button--primary) {
+  background: rgba(90, 165, 222, 0.7);
+  border: none;
+}
+
+.resource-manage :deep(.dialog-footer .el-button--primary:hover) {
+  background: rgba(90, 165, 222, 1);
+}
+
+/* 表格编辑按钮样式 */
+.table-card :deep(.el-button--primary) {
+  background: rgba(90, 165, 222, 0.7);
+  border: none;
+}
+
+.table-card :deep(.el-button--primary):hover {
+  background: rgba(90, 165, 222, 0.7);
+}
+
+.table-card :deep(.el-button .el-icon) {
+  margin-right: 4px;
 }
 </style>

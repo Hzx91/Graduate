@@ -227,7 +227,7 @@ const deleteUser = (userId, username) => {
   )
   .then(() => {
     // 调用真正删除接口
-    fetch(`http://localhost:8082/api/admin/user/${userId}/delete`, {
+    fetch(`http://localhost:8082/api/admin/user/${userId}`, {
       method: 'DELETE'
     })
     .then(res => res.json())

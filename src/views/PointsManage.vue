@@ -23,20 +23,30 @@
 
     <!-- 用户积分统计卡片 -->
     <div class="user-cards">
-      <div 
-        v-for="user in pointsList" 
-        :key="user.user_id" 
+      <div
+        v-for="user in pointsList"
+        :key="user.user_id"
         class="user-card"
-        :class="{ active: selectedUser && selectedUser.user_id === user.user_id }"
+        :class="{
+          active: selectedUser && selectedUser.user_id === user.user_id,
+        }"
         @click="selectUser(user)"
       >
         <div class="user-info">
           <div class="user-avatar">
-            <img v-if="user.avatar" :src="getAvatarUrl(user.avatar)" alt="avatar" />
-            <span v-else class="avatar-placeholder">{{ getNameInitial(user.nick_name || user.user_name) }}</span>
+            <img
+              v-if="user.avatar"
+              :src="getAvatarUrl(user.avatar)"
+              alt="avatar"
+            />
+            <span v-else class="avatar-placeholder">{{
+              getNameInitial(user.nick_name || user.user_name)
+            }}</span>
           </div>
           <div class="user-details">
-            <div class="user-name">{{ user.nick_name || user.user_name || '未知用户' }}</div>
+            <div class="user-name">
+              {{ user.nick_name || user.user_name || "未知用户" }}
+            </div>
             <div class="user-id">ID: {{ user.user_name }}</div>
           </div>
         </div>
@@ -46,8 +56,12 @@
             <span class="points-value">{{ user.points || 0 }}</span>
           </div>
           <div class="points-breakdown">
-            <span class="breakdown-item sign-in">签到: {{ user.sign_in_points || 0 }}</span>
-            <span class="breakdown-item mood">情绪: {{ user.mood_points || 0 }}</span>
+            <span class="breakdown-item sign-in"
+              >签到: {{ user.sign_in_points || 0 }}</span
+            >
+            <span class="breakdown-item mood"
+              >情绪: {{ user.mood_points || 0 }}</span
+            >
           </div>
         </div>
       </div>
@@ -56,7 +70,9 @@
     <!-- 选中用户的详细积分记录 -->
     <div class="detail-section" v-if="selectedUser">
       <div class="detail-header">
-        <h3>{{ selectedUser.nick_name || selectedUser.user_name }} 的积分明细</h3>
+        <h3>
+          {{ selectedUser.nick_name || selectedUser.user_name }} 的积分明细
+        </h3>
         <el-button type="text" @click="selectedUser = null">关闭</el-button>
       </div>
 
@@ -105,13 +121,18 @@
           </el-table-column>
           <el-table-column prop="source" label="来源" width="120">
             <template #default="scope">
-              <el-tag :type="getSourceTagType(scope.row.source)">{{ getSourceName(scope.row.source) }}</el-tag>
+              <el-tag :type="getSourceTagType(scope.row.source)">{{
+                getSourceName(scope.row.source)
+              }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="points_change" label="积分变动" width="100">
             <template #default="scope">
-              <span :class="scope.row.points_change >= 0 ? 'positive' : 'negative'">
-                {{ scope.row.points_change >= 0 ? '+' : '' }}{{ scope.row.points_change }}
+              <span
+                :class="scope.row.points_change >= 0 ? 'positive' : 'negative'"
+              >
+                {{ scope.row.points_change >= 0 ? "+" : ""
+                }}{{ scope.row.points_change }}
               </span>
             </template>
           </el-table-column>
@@ -146,168 +167,173 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, onMounted } from "vue";
+import { ElMessage } from "element-plus";
 
 // 搜索参数
-const searchKeyword = ref('')
+const searchKeyword = ref("");
 
 // 分页参数
-const currentPage = ref(1)
-const pageSize = ref(10)
-const total = ref(0)
+const currentPage = ref(1);
+const pageSize = ref(10);
+const total = ref(0);
 
 // 积分列表数据
-const pointsList = ref([])
+const pointsList = ref([]);
 
 // 选中的用户
-const selectedUser = ref(null)
-const pointsRecords = ref([])
-const recordsPage = ref(1)
-const recordsTotal = ref(0)
+const selectedUser = ref(null);
+const pointsRecords = ref([]);
+const recordsPage = ref(1);
+const recordsTotal = ref(0);
 
 // 加载积分列表
 const loadPointsList = () => {
   let params = {
     pageindex: currentPage.value,
-    pagesize: pageSize.value
-  }
-  
+    pagesize: pageSize.value,
+  };
+
   if (searchKeyword.value) {
-    params.keyword = searchKeyword.value
+    params.keyword = searchKeyword.value;
   }
-  
-  fetch(`http://localhost:8082/api/admin/user-points`, {
-    method: 'GET',
+
+  const queryString = new URLSearchParams(params).toString();
+
+  fetch(`http://localhost:8082/api/admin/user-points?${queryString}`, {
+    method: "GET",
     headers: {
-      'Content-Type': 'application/json'
-    }
+      "Content-Type": "application/json",
+    },
   })
-  .then(response => response.json())
-  .then(data => {
-    if (data.status === 0) {
-      pointsList.value = data.list
-      total.value = data.total
-    } else {
-      console.error('获取积分列表失败:', data.message)
-      ElMessage.error('获取积分列表失败')
-    }
-  })
-  .catch(error => {
-    console.error('网络错误:', error)
-    ElMessage.error('网络错误，请稍后重试')
-  })
-}
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.status === 0) {
+        pointsList.value = data.list;
+        total.value = data.total;
+      } else {
+        console.error("获取积分列表失败:", data.message);
+        ElMessage.error("获取积分列表失败");
+      }
+    })
+    .catch((error) => {
+      console.error("网络错误:", error);
+      ElMessage.error("网络错误，请稍后重试");
+    });
+};
 
 // 选择用户查看详情
 const selectUser = (user) => {
-  selectedUser.value = user
-  recordsPage.value = 1
-  loadUserRecords()
-}
+  selectedUser.value = user;
+  recordsPage.value = 1;
+  loadUserRecords();
+};
 
 // 加载用户积分记录
 const loadUserRecords = () => {
-  if (!selectedUser.value) return
-  
-  fetch(`http://localhost:8082/api/user/${selectedUser.value.user_id}/points-records?page=${recordsPage.value}&size=10`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json'
+  if (!selectedUser.value) return;
+
+  fetch(
+    `http://localhost:8082/api/user/${selectedUser.value.user_id}/points-records?page=${recordsPage.value}&size=10`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
     }
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.status === 0) {
-      pointsRecords.value = data.list || []
-      recordsTotal.value = data.total || data.list?.length || 0
-    } else {
-      pointsRecords.value = []
-    }
-  })
-  .catch(error => {
-    console.error('获取积分记录失败:', error)
-    pointsRecords.value = []
-  })
-}
+  )
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.status === 0) {
+        pointsRecords.value = data.list || [];
+        recordsTotal.value = data.total || data.list?.length || 0;
+      } else {
+        pointsRecords.value = [];
+      }
+    })
+    .catch((error) => {
+      console.error("获取积分记录失败:", error);
+      pointsRecords.value = [];
+    });
+};
 
 // 获取头像URL
 const getAvatarUrl = (avatar) => {
-  if (!avatar) return ''
-  if (avatar.startsWith('http')) return avatar
-  return `http://localhost:8082${avatar}`
-}
+  if (!avatar) return "";
+  if (avatar.startsWith("http")) return avatar;
+  return `http://localhost:8082${avatar}`;
+};
 
 // 获取名字首字母
 const getNameInitial = (name) => {
-  if (!name) return '?'
-  return name.charAt(0).toUpperCase()
-}
+  if (!name) return "?";
+  return name.charAt(0).toUpperCase();
+};
 
 // 格式化日期
 const formatDate = (dateStr) => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  return date.toLocaleString("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 
 // 获取来源名称
 const getSourceName = (source) => {
   const sourceMap = {
-    'sign_in': '签到',
-    'daily_sign': '每日签到',
-    'mood_record': '情绪记录',
-    'post': '发帖',
-    'comment': '评论',
-    'like': '点赞',
-    'collect': '收藏',
-    'other': '其他'
-  }
-  return sourceMap[source] || source || '其他'
-}
+    sign_in: "签到",
+    daily_sign: "每日签到",
+    mood_record: "情绪记录",
+    post: "发帖",
+    comment: "评论",
+    like: "点赞",
+    collect: "收藏",
+    other: "其他",
+  };
+  return sourceMap[source] || source || "其他";
+};
 
 // 获取来源标签类型
 const getSourceTagType = (source) => {
   const typeMap = {
-    'sign_in': 'success',
-    'daily_sign': 'success',
-    'mood_record': 'warning',
-    'post': 'primary',
-    'comment': 'info',
-    'like': 'danger',
-    'collect': 'warning'
-  }
-  return typeMap[source] || ''
-}
+    sign_in: "success",
+    daily_sign: "success",
+    mood_record: "warning",
+    post: "primary",
+    comment: "info",
+    like: "danger",
+    collect: "warning",
+  };
+  return typeMap[source] || "";
+};
 
 // 搜索处理
 const handleSearch = () => {
-  currentPage.value = 1
-  loadPointsList()
-}
+  currentPage.value = 1;
+  loadPointsList();
+};
 
 // 分页大小变化
 const handleSizeChange = (size) => {
-  pageSize.value = size
-  loadPointsList()
-}
+  pageSize.value = size;
+  loadPointsList();
+};
 
 // 页码变化
 const handleCurrentChange = (current) => {
-  currentPage.value = current
-  loadPointsList()
-}
+  currentPage.value = current;
+  loadPointsList();
+};
 
 // 页面加载时初始化数据
 onMounted(() => {
-  loadPointsList()
-})
+  loadPointsList();
+});
 </script>
 
 <style scoped>
@@ -315,7 +341,8 @@ onMounted(() => {
   padding: 20px;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   min-height: calc(100vh - 70px);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
 }
 
 /* 页面标题 */
@@ -390,7 +417,11 @@ onMounted(() => {
   height: 48px;
   border-radius: 50%;
   overflow: hidden;
-  background: linear-gradient(135deg, rgba(90, 165, 222, 0.7), rgba(64, 144, 223, 0.9));
+  background: linear-gradient(
+    135deg,
+    rgba(90, 165, 222, 0.7),
+    rgba(64, 144, 223, 0.9)
+  );
   display: flex;
   align-items: center;
   justify-content: center;
@@ -509,7 +540,11 @@ onMounted(() => {
 }
 
 .stat-card.total {
-  background: linear-gradient(135deg, rgba(90, 165, 222, 0.15), rgba(64, 144, 223, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(90, 165, 222, 0.15),
+    rgba(64, 144, 223, 0.2)
+  );
 }
 
 .stat-card.sign-in {

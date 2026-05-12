@@ -9,8 +9,66 @@
           <el-button @click="searchPost">查询</el-button>
         </template>
       </el-input>
+      <!-- 批量操作工具栏 -->
+      <div class="batch-actions" v-if="postList.length > 0">
+        <div class="batch-left">
+          <el-checkbox 
+            v-model="selectAll" 
+            @change="handleSelectAll"
+            :indeterminate="isIndeterminate"
+          >全选</el-checkbox>
+          <span class="selected-count" v-if="selectedPosts.length > 0">
+            已选择 {{ selectedPosts.length }} 项
+          </span>
+        </div>
+        <div class="batch-right">
+          <el-button 
+            type="success" 
+            :disabled="selectedPosts.length === 0"
+            @click="batchApprove"
+            class="batch-btn"
+          >
+            批量通过
+          </el-button>
+          <el-button 
+            type="warning" 
+            :disabled="selectedPosts.length === 0"
+            @click="batchReject"
+            class="batch-btn"
+          >
+            批量拒绝
+          </el-button>
+          <el-button 
+            type="info" 
+            :disabled="selectedPosts.length === 0"
+            @click="batchTop"
+            class="batch-btn"
+          >
+            批量置顶
+          </el-button>
+          <el-button 
+            type="danger" 
+            :disabled="selectedPosts.length === 0"
+            @click="batchDelete"
+            class="batch-btn"
+          >
+            批量删除
+          </el-button>
+        </div>
+      </div>
+      
+      <!-- 无数据提示 -->
+      <el-empty v-if="postList.length === 0" description="暂无帖子数据" style="margin-top: 50px;"></el-empty>
+      
       <!-- 帖子列表 -->
-      <el-table :data="postList" border style="width: 100%">
+      <el-table 
+        v-if="postList.length > 0" 
+        :data="postList" 
+        border 
+        style="width: 100%; margin-top: 15px;" 
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="50" :selectable="checkSelectable"></el-table-column>
         <el-table-column prop="user_id" label="用户ID" width="120"></el-table-column>
         <el-table-column prop="title" label="帖子标题" min-width="180"></el-table-column>
         <el-table-column prop="content" label="帖子内容" min-width="250">
@@ -151,14 +209,39 @@
         </div>
         
         <!-- 评论列表 -->
-        <div class="detail-item" v-if="currentPostComments.length > 0">
+        <div class="detail-item">
           <span class="label">评论列表：</span>
           <div class="value comments-list">
-            <div class="comment-table-container">
-              <el-table :data="currentPostComments" border style="width: 100%; margin-top: 10px;">
+            <div class="comment-header">
+              <span class="comment-count">共 {{ currentPostComments.length }} 条评论</span>
+              <div class="comment-actions">
+                <el-checkbox 
+                  v-model="selectAllComments" 
+                  @change="handleSelectAllComments"
+                  :disabled="currentPostComments.length === 0"
+                >全选</el-checkbox>
+                <el-button 
+                  type="danger" 
+                  size="small" 
+                  :disabled="selectedComments.length === 0"
+                  @click="batchDeleteComments"
+                  class="batch-delete-btn"
+                >
+                  删除选中 ({{ selectedComments.length }})
+                </el-button>
+              </div>
+            </div>
+            <div class="comment-table-container" v-if="currentPostComments.length > 0">
+              <el-table 
+                :data="currentPostComments" 
+                border 
+                style="width: 100%; margin-top: 10px;"
+                @selection-change="handleCommentSelectionChange"
+              >
+                <el-table-column type="selection" width="50"></el-table-column>
                 <el-table-column prop="id" label="评论ID" width="80"></el-table-column>
                 <el-table-column prop="user_name" label="评论者" width="120"></el-table-column>
-                <el-table-column prop="content" label="评论内容" width="300"></el-table-column>
+                <el-table-column prop="content" label="评论内容" min-width="200"></el-table-column>
                 <el-table-column prop="create_time" label="评论时间" width="180"></el-table-column>
                 <el-table-column label="操作" width="100">
                   <template #default="scope">
@@ -167,11 +250,10 @@
                 </el-table-column>
               </el-table>
             </div>
+            <div v-else class="no-comments">
+              <span>暂无评论</span>
+            </div>
           </div>
-        </div>
-        <div class="detail-item" v-else>
-          <span class="label">评论列表：</span>
-          <span class="value">暂无评论</span>
         </div>
       </div>
       <template #footer>
@@ -200,6 +282,13 @@ const postList = ref([])
 const dialogVisible = ref(false)
 const currentPost = ref(null)
 const currentPostComments = ref([])
+// 评论多选相关
+const selectedComments = ref([])
+const selectAllComments = ref(false)
+// 帖子批量选择相关
+const selectedPosts = ref([])
+const selectAll = ref(false)
+const isIndeterminate = ref(false)
 
 // 获取帖子列表
 const getPostList = () => {
@@ -354,6 +443,8 @@ const deleteComment = (comment) => {
         if (res.data.status === 0) {
           // 更新评论列表
           currentPostComments.value = currentPostComments.value.filter(item => item.id !== comment.id);
+          // 从选中列表中移除
+          selectedComments.value = selectedComments.value.filter(id => id !== comment.id);
           // 更新当前帖子的评论数
           if (currentPost.value) {
             currentPost.value.comment_count = Math.max(0, currentPost.value.comment_count - 1);
@@ -374,6 +465,68 @@ const deleteComment = (comment) => {
     if (err !== 'cancel') {
       console.error('删除失败:', err);
       ElMessage.error('删除失败');
+    }
+  });
+}
+
+// 处理评论选择变化
+const handleCommentSelectionChange = (selection) => {
+  selectedComments.value = selection.map(item => item.id);
+}
+
+// 全选/取消全选评论
+const handleSelectAllComments = (checked) => {
+  if (checked) {
+    selectedComments.value = currentPostComments.value.map(comment => comment.id);
+  } else {
+    selectedComments.value = [];
+  }
+}
+
+// 批量删除评论
+const batchDeleteComments = () => {
+  if (selectedComments.value.length === 0) {
+    ElMessage.warning('请先选择要删除的评论');
+    return;
+  }
+  
+  ElMessageBox.confirm(`确定要删除选中的 ${selectedComments.value.length} 条评论吗？`, '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  })
+  .then(() => {
+    // 使用批量删除API
+    axios.post('http://localhost:8082/api/community/comments/batch-delete', {
+      comment_ids: selectedComments.value
+    })
+      .then(res => {
+        if (res.data.status === 0) {
+          // 更新评论列表
+          const deletedIds = new Set(selectedComments.value);
+          currentPostComments.value = currentPostComments.value.filter(item => !deletedIds.has(item.id));
+          // 清空选中列表
+          selectedComments.value = [];
+          selectAllComments.value = false;
+          // 更新当前帖子的评论数
+          if (currentPost.value) {
+            currentPost.value.comment_count = Math.max(0, currentPost.value.comment_count - deletedIds.size);
+          }
+          // 刷新帖子列表
+          getPostList();
+          ElMessage.success(res.data.message || '删除成功');
+        } else {
+          ElMessage.error(res.data.message || '删除失败');
+        }
+      })
+      .catch(err => {
+        console.error('批量删除评论失败:', err);
+        ElMessage.error('批量删除失败');
+      });
+  })
+  .catch(err => {
+    if (err !== 'cancel') {
+      console.error('批量删除失败:', err);
     }
   });
 }
@@ -463,6 +616,222 @@ const deletePost = (row) => {
       ElMessage.error('删除失败')
     }
   })
+}
+
+// ==================== 批量操作相关函数 ====================
+
+// 检查行是否可选（已通过的帖子不能置顶，但可以选择）
+const checkSelectable = (row) => {
+  return true // 所有帖子都可以被选择
+}
+
+// 处理帖子选择变化
+const handleSelectionChange = (selection) => {
+  selectedPosts.value = selection
+  // 更新全选状态
+  if (selection.length === 0) {
+    selectAll.value = false
+    isIndeterminate.value = false
+  } else if (selection.length === postList.value.length) {
+    selectAll.value = true
+    isIndeterminate.value = false
+  } else {
+    selectAll.value = false
+    isIndeterminate.value = true
+  }
+}
+
+// 全选/取消全选帖子
+const handleSelectAll = (checked) => {
+  if (checked) {
+    selectedPosts.value = [...postList.value]
+  } else {
+    selectedPosts.value = []
+  }
+  isIndeterminate.value = false
+}
+
+// 批量通过审核
+const batchApprove = () => {
+  if (selectedPosts.value.length === 0) {
+    ElMessage.warning('请先选择要通过的帖子')
+    return
+  }
+  
+  // 过滤出待审核的帖子
+  const pendingPosts = selectedPosts.value.filter(post => post.status === 0)
+  if (pendingPosts.length === 0) {
+    ElMessage.warning('所选帖子中没有待审核的帖子')
+    return
+  }
+  
+  ElMessageBox.confirm(
+    `确定要通过选中的 ${pendingPosts.length} 篇帖子的审核吗？`,
+    '批量审核通过',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'info'
+    }
+  )
+  .then(() => {
+    // 使用循环单个通过的方式（如果后端没有批量API）
+    Promise.all(pendingPosts.map(post => 
+      axios.put(`http://localhost:8082/api/community/post/${post.id}/status`, {
+        status: 1
+      })
+    ))
+    .then(res => {
+      const successCount = res.filter(r => r.data.status === 0).length
+      ElMessage.success(`成功通过 ${successCount} 篇帖子`)
+      // 清空选择
+      clearSelection()
+      // 刷新列表
+      getPostList()
+    })
+    .catch(err => {
+      console.error('批量通过失败:', err)
+      ElMessage.error('批量通过失败')
+    })
+  })
+  .catch(() => {})
+}
+
+// 批量拒绝审核
+const batchReject = () => {
+  if (selectedPosts.value.length === 0) {
+    ElMessage.warning('请先选择要拒绝的帖子')
+    return
+  }
+  
+  // 过滤出待审核的帖子
+  const pendingPosts = selectedPosts.value.filter(post => post.status === 0)
+  if (pendingPosts.length === 0) {
+    ElMessage.warning('所选帖子中没有待审核的帖子')
+    return
+  }
+  
+  ElMessageBox.confirm(
+    `确定要拒绝选中的 ${pendingPosts.length} 篇帖子的审核吗？`,
+    '批量审核拒绝',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  )
+  .then(() => {
+    // 使用循环单个拒绝的方式
+    Promise.all(pendingPosts.map(post => 
+      axios.put(`http://localhost:8082/api/community/post/${post.id}/status`, {
+        status: 2,
+        reason: '内容不符合要求'
+      })
+    ))
+    .then(res => {
+      const successCount = res.filter(r => r.data.status === 0).length
+      ElMessage.success(`已拒绝 ${successCount} 篇帖子`)
+      // 清空选择
+      clearSelection()
+      // 刷新列表
+      getPostList()
+    })
+    .catch(err => {
+      console.error('批量拒绝失败:', err)
+      ElMessage.error('批量拒绝失败')
+    })
+  })
+  .catch(() => {})
+}
+
+// 批量置顶
+const batchTop = () => {
+  if (selectedPosts.value.length === 0) {
+    ElMessage.warning('请先选择要置顶的帖子')
+    return
+  }
+  
+  // 过滤出已通过的帖子（只有已通过的帖子才能置顶）
+  const approvedPosts = selectedPosts.value.filter(post => post.status === 1)
+  if (approvedPosts.length === 0) {
+    ElMessage.warning('所选帖子中没有已通过审核的帖子（只有已通过的帖子才能置顶）')
+    return
+  }
+  
+  ElMessageBox.confirm(
+    `确定要将选中的 ${approvedPosts.length} 篇帖子置顶吗？`,
+    '批量置顶',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'info'
+    }
+  )
+  .then(() => {
+    // 使用循环单个置顶的方式
+    Promise.all(approvedPosts.map(post => 
+      axios.put(`http://localhost:8082/api/community/post/${post.id}/top`, {
+        is_top: 1
+      })
+    ))
+    .then(res => {
+      const successCount = res.filter(r => r.data.status === 0).length
+      ElMessage.success(`已置顶 ${successCount} 篇帖子`)
+      // 清空选择
+      clearSelection()
+      // 刷新列表
+      getPostList()
+    })
+    .catch(err => {
+      console.error('批量置顶失败:', err)
+      ElMessage.error('批量置顶失败')
+    })
+  })
+  .catch(() => {})
+}
+
+// 批量删除
+const batchDelete = () => {
+  if (selectedPosts.value.length === 0) {
+    ElMessage.warning('请先选择要删除的帖子')
+    return
+  }
+  
+  ElMessageBox.confirm(
+    `确定要删除选中的 ${selectedPosts.value.length} 篇帖子吗？此操作不可恢复！`,
+    '批量删除',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'error'
+    }
+  )
+  .then(() => {
+    // 使用循环单个删除的方式
+    Promise.all(selectedPosts.value.map(post => 
+      axios.delete(`http://localhost:8082/api/community/post/${post.id}`)
+    ))
+    .then(res => {
+      const successCount = res.filter(r => r.data.status === 0).length
+      ElMessage.success(`已删除 ${successCount} 篇帖子`)
+      // 清空选择
+      clearSelection()
+      // 刷新列表
+      getPostList()
+    })
+    .catch(err => {
+      console.error('批量删除失败:', err)
+      ElMessage.error('批量删除失败')
+    })
+  })
+  .catch(() => {})
+}
+
+// 清空选择状态
+const clearSelection = () => {
+  selectedPosts.value = []
+  selectAll.value = false
+  isIndeterminate.value = false
 }
 
 // 组件挂载时获取帖子列表
@@ -678,7 +1047,7 @@ onMounted(() => {
 }
 
 .post-manage :deep(.el-pagination .el-pager li.active) {
-  background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
+  background: linear-gradient(180deg, rgba(173, 216, 255, 0.9) 0%, /* 浅冰蓝 */ rgba(135, 206, 235, 0.9) 50%, /* 中冰蓝 */ rgba(96, 168, 230, 0.9) 100% /* 深冰蓝 */);
   color: #fff;
   box-shadow: 0 4px 12px rgba(107, 70, 193, 0.3);
 }
@@ -691,7 +1060,7 @@ onMounted(() => {
 }
 
 .post-manage :deep(.el-dialog__header) {
-  background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
+  background: linear-gradient(180deg, rgba(173, 216, 255, 0.9) 0%, /* 浅冰蓝 */ rgba(135, 206, 235, 0.9) 50%, /* 中冰蓝 */ rgba(96, 168, 230, 0.9) 100% /* 深冰蓝 */);
   color: #fff;
   padding: 20px;
 }
@@ -831,6 +1200,63 @@ onMounted(() => {
   background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
 }
 
+/* 评论列表头部样式 */
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background: #f7fafc;
+  border-radius: 8px 8px 0 0;
+  border: 1px solid #e2e8f0;
+  border-bottom: none;
+}
+
+.comment-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.comment-actions :deep(.el-checkbox) {
+  margin-right: 10px;
+}
+
+.batch-delete-btn {
+  background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+  border: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.batch-delete-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #c53030 0%, #9b2c2c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+}
+
+.batch-delete-btn:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
+}
+
+/* 无评论提示 */
+.no-comments {
+  padding: 40px;
+  text-align: center;
+  background: #f7fafc;
+  border-radius: 8px;
+  color: #a0aec0;
+  font-size: 14px;
+  border: 1px solid #e2e8f0;
+}
+
 /* 关闭按钮样式 */
 .post-manage :deep(.el-dialog__footer .el-button) {
   border-radius: 8px;
@@ -899,6 +1325,135 @@ onMounted(() => {
   font-weight: 500;
 }
 
+/* 批量操作工具栏样式 */
+.batch-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  margin-bottom: 15px;
+  background: linear-gradient(180deg,
+		  rgba(173, 216, 255, 0.9) 0%,    /* 浅冰蓝 */
+		  rgba(135, 206, 235, 0.9) 50%,  /* 中冰蓝 */
+		  rgba(96, 168, 230, 0.9) 100%   /* 深冰蓝 */
+		);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.batch-actions:hover {
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.batch-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.batch-left :deep(.el-checkbox) {
+  color: #fff;
+  font-weight: 600;
+}
+
+.batch-left :deep(.el-checkbox__label) {
+  color: #fff !important;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.batch-left :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
+  background-color: #fff;
+  border-color: #fff;
+}
+
+.batch-left :deep(.el-checkbox__input.is-checked .el-checkbox__inner::after) {
+  border-color: #667eea;
+}
+
+.batch-left :deep(.el-checkbox__input.is-indeterminate .el-checkbox__inner) {
+  background-color: #fff;
+  border-color: #fff;
+}
+
+.batch-left :deep(.el-checkbox__input.is-indeterminate .el-checkbox__inner::before) {
+  background-color: #667eea;
+  border-color: #667eea;
+}
+
+.selected-count {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.batch-right {
+  display: flex;
+  gap: 10px;
+}
+
+.batch-btn {
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.batch-btn:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.batch-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 批量操作按钮特殊样式 */
+.batch-right :deep(.el-button--success) {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  border: none;
+}
+
+.batch-right :deep(.el-button--success):not(:disabled):hover {
+  background: linear-gradient(135deg, #0d8a7f 0%, #2dd36f 100%);
+}
+
+.batch-right :deep(.el-button--warning) {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  border: none;
+}
+
+.batch-right :deep(.el-button--warning):not(:disabled):hover {
+  background: linear-gradient(135deg, #e083c7 0%, #e0475a 100%);
+}
+
+.batch-right :deep(.el-button--info) {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  border: none;
+  color: #fff;
+}
+
+.batch-right :deep(.el-button--info):not(:disabled):hover {
+  background: linear-gradient(135deg, #3e9be6 0%, #00d9e6 100%);
+}
+
+.batch-right :deep(.el-button--danger) {
+  background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+  border: none;
+}
+
+.batch-right :deep(.el-button--danger):not(:disabled):hover {
+  background: linear-gradient(135deg, #e6395c 0%, #e64425 100%);
+}
+
 @media (max-width: 768px) {
   .post-manage {
     padding: 10px;
@@ -920,6 +1475,33 @@ onMounted(() => {
     padding: 4px 8px;
     font-size: 12px;
     margin: 1px;
+  }
+  
+  /* 移动端批量操作工具栏 */
+  .batch-actions {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 15px;
+  }
+  
+  .batch-left {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .batch-right {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .batch-btn {
+    flex: 1;
+    min-width: 70px;
+    padding: 6px 10px;
+    font-size: 12px;
   }
 }
 </style>

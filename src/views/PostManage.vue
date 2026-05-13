@@ -334,15 +334,23 @@ const handleCurrentChange = (val) => {
 
 // 查询方法
 const searchPost = () => {
-  // 搜索功能实现
-  axios.get('http://localhost:8082/api/community/posts', {
-    params: {
-      isAdmin: 1,
-      pageindex: currentPage.value,
-      pagesize: pageSize.value,
-      keyword: searchKey.value
-    }
-  })
+  // 搜索时重置页码为1
+  currentPage.value = 1
+
+  // 构建请求参数
+  const params = {
+    isAdmin: 1,
+    pageindex: currentPage.value,
+    pagesize: pageSize.value
+  }
+
+  // 如果有关键词，添加到参数中
+  if (searchKey.value && searchKey.value.trim()) {
+    params.keyword = searchKey.value.trim()
+  }
+
+  // 使用 params 对象发送请求
+  axios.get('http://localhost:8082/api/community/posts', { params })
   .then(res => {
     console.log('搜索帖子成功:', res.data)
     if (res.data.status === 0) {
